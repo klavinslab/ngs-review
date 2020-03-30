@@ -1,16 +1,16 @@
-#Cannon Mallory
-#malloc3@uw.edu
+# Cannon Mallory
+# malloc3@uw.edu
 #
-#This module is to contain common actions done with collections
-#This includes moving them, finding locations, putting away individual collections.
+# This module is to contain common actions done with collections
+# This includes moving them, finding locations, putting away individual collections.
 # or putting a whole collection on a machine etc
-#These actions should involve the WHOLE plate not individual wells.  The collection is doing the whole action
+# These actions should involve the WHOLE plate not individual wells.  The collection is doing the whole action
 module CollectionActions
     
     # stores all input collections from all operations
     #
-    # @operations OperationsList the operation list that all input collections should be stored
-    # @location Optional String, the location that the items are to be moved to
+    # @param operations [OperationsList] the operation list that all input collections should be stored
+    # @param location [String] the location that the items are to be moved to
     def store_input_collections(operations, location = nil)
         show do 
            title "Put Away the Following Items"
@@ -23,7 +23,7 @@ module CollectionActions
     
     # stores all output collections from all operations
     #
-    # @operations OperationsList the operation list that all output collections should be stored
+    # @param operations OperationsList the operation list that all output collections should be stored
     def store_output_collections(operations, location = nil)
         show do 
            title "Put Away the Following Items"

@@ -1,22 +1,11 @@
-#Cannon Mallory
-#UW-BIOFAB
-#03/04/2019
-#malloc3@uw.edu
-#
-#
-#This protocol is for total RNA QC.  
-# It takes in a batch of samples, 
-# replates these
-#samples together onto a 96 well plate
-# THe platethat will then go through a QC protocols including
-#getting the concentrations of the original sample.
-# These concentrations will then be associated
-#with the original sample for use later.
+# Cannon Mallory
+# UW-BIOFAB
+# 03/04/2019
+# malloc3@uw.edu
 
-
-#Currently build plate needs a bit of work.  It works by order of input array and not by order of sample location on plate
-
-# In general, make method names as specific as possible, so -- what are you transfering, etc.
+# I moved this description to the protocol documentation page 
+# Note todos with TODO
+# TODO: Currently build plate needs a bit of work.  It works by order of input array and not by order of sample location on plate
 
 needs "Standard Libs/Debug"
 needs "Standard Libs/CommonInputOutputNames"
@@ -28,26 +17,33 @@ needs "Collection_Management/SampleManagement"
 needs "RNA_Seq/WorkflowValidation"
 needs "RNA_Seq/KeywordLib"
 
-
+# Ruby style, put each include on its own line -- I alphabative them but that's just Amy Cash style
 class Protocol
-  include Debug, CollectionDisplay, CollectionTransfer, SampleManagement
-  include CollectionActions, WorkflowValidation, CommonInputOutputNames, KeywordLib
+  include CollectionActions
+  include CollectionDisplay
+  include CollectionTransfer
+  include CommonInputOutputNames
+  include Debug
+  include KeywordLib
+  include SampleManagement
+  include WorkflowValidation 
 
   TRANSFER_VOL = 20   #volume of sample to be transfered in ul
-
 
   def main
     validate_inputs(operations)
     
     working_plate = make_new_plate(C_TYPE) # in collection actions library, return instance of class collection
-    # I would rename this constant, since we have a protocol called C_DNA, it could be confusing. 
-    
+    # Rename C_TYPE -- we have a protocol called C_DNA, so it's confusing. 
+    # The name should reveal something about what it's for and I'm not sure what C is in this context?
     operations.retrieve
 
     operations.each do |op|
-      input_fv_array = op.input_array(INPUT_ARRAY) # I know we use this fv abbreviation a lot, but I find it unclear.
-      # I ____
+      input_fv_array = op.input_array(INPUT_ARRAY)
+     # Same as before, not sure why initial samples are an array? I think I'm missing something 
+      # Also, spell out field value 
       add_fv_array_samples_to_collection(input_fv_array, working_plate)
+      # Transfer what? 
       transfer_from_array_collections(input_fv_array, working_plate, TRANSFER_VOL)
     end
     
@@ -61,7 +57,7 @@ class Protocol
   # Instruction on taking the QC measurements themselves.
   # Currently not operational but associates random concentrations for testing
   #
-  #TODO complete this and make it actually look at CSV Files
+  # TODO complete this and make it actually look at CSV Files
   def take_qc_measurments(working_plate)
     input_rcx = []
     operations.each do |op|
@@ -78,12 +74,12 @@ class Protocol
         end
       end
     end
-
+# Single Quotes preferred unless you're using string interpolation 
     show do
-      title "Perform QC Measurements"
-      note "Please Attach excel files"
-      note "For testing purposes each sample will be given a random concentration from 50 to 100 ng/ul"
-      note "This will eventually come from a CSV file"
+      title 'Perform QC Measurements'
+      note 'Please Attach excel files'
+      note 'For testing purposes each sample will be given a random concentration from 50 to 100 ng/ul'
+      note 'This will eventually come from a CSV file'
       table highlight_rcx(working_plate, input_rcx)
     end
   end
