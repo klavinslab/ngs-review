@@ -8,6 +8,7 @@
 
 ## Yard Doc Style: 
 We use [YARD](https://www.rubydoc.info/gems/yard/file/docs/GettingStarted.md) to generate documentation.
+That link has a lot of information on style, but the main thing is to get the tags right. 
 It has to follow a specific format. You can use tags for @return, @raise errors etc. 
 They all work the same way -- @Tag variable_name [variable_type] Any other notes
 ```ruby
@@ -26,7 +27,10 @@ end
 ## More Ruby Style Stuff 
 * Each include statement gets its own line 
 * x += y is preferred over x = x + y
+* Single quotes `'thing'` preferred over double, unless you need interpolation `"#{thing}"`  
 *  
 
-## Etc. 
+## House Style Stuff 
 * Move intro information into documentation section of protocol, along with note on what protocols (if any) would follow or precede it.
+* Use () when declaring parameters in method signature, and when calling methods. 
+* Keyword Arguments `variable: default_value` are preferred over defaults `variable = default`

@@ -14,7 +14,7 @@ module CollectionActions
     # @param location [String] the location that the items are to be moved to
     def store_input_collections(operations, location: nil)
         show do 
-           title "Put Away the Following Items"
+           title 'Put Away the Following Items'
            operations.each do |op|
               array_of_input_fv = op.inputs.reject{|fv| fv.collection == nil}
               table table_of_object_locations(array_of_input_fv, location)
@@ -27,7 +27,7 @@ module CollectionActions
     # @param operations [OperationList] the operation list that all output collections should be stored
     def store_output_collections(operations, location: nil)
         show do 
-           title "Put Away the Following Items"
+           title 'Put Away the Following Items'
            array_of_input_fv = []
            operations.each do |op|
             array_of_input_fv += op.outputs.reject{|fv| fv.collection == nil}
@@ -59,7 +59,6 @@ module CollectionActions
         return get_item_locations(obj_array)
     end
 
-
     # Sets the location of all objects in array to some given locations
     #
     # @param obj_array  Array[Collection] or Array[Items] an array of any objects that extend class item
@@ -70,11 +69,12 @@ module CollectionActions
         end
     end
     
-    #instructions to store a specific collection
+    # Instructions to store a specific collection
     #
-    # @param collection Collection the collection that is to be put away
-    # Returns:
-    # @ Table of collections and their locations
+    # @param collection [Collection] the collection that is to be put away
+    # @return tab [Array<Array>] of collections and their locations
+    # Spell out table for variable name or better, use a variable that denotes what's in the table 
+    # Especially since we have an aquarium built in called table 
     def get_item_locations(obj_array)
         tab = [['ID', 'Collection Type', 'Location']]
         obj_array.each do |obj|
@@ -85,9 +85,9 @@ module CollectionActions
     
     # Instructions to store a specific item
     #
-    # @param obj_item Item/Object that extends class item or Array[Item/item that 
+    # @param obj_item [Item/Object that extends class item or Array[Item/item that 
     #       extends class item]         all items that need to be stored
-    # @param location Optional String Sets the location of the items if included
+    # @param location [String] Sets the location of the items if included
     def store_items(obj_item, location: nil)
         show do
             title "Put Away the Following Items"
@@ -127,7 +127,7 @@ module CollectionActions
         end
     end
 
-    #makes a new plate and provides instructions to label said plate
+    # makes a new plate and provides instructions to label said plate
     #
     # @param c_type [string] the collection type
     # @param label_plate [boolean] whether to get and label plate or no default true
@@ -140,7 +140,7 @@ module CollectionActions
 
     # Instructions on getting and labeling new plate
     #
-    # @param plate [Collection] plate to be gotten and labeled
+    # @param plate [Collection] plate to be retrieved and labeled
     def get_and_label_new_plate(plate)
         show do
         title "Get and Label Working Plate"
