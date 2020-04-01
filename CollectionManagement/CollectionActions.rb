@@ -1,10 +1,11 @@
 # Cannon Mallory
 # malloc3@uw.edu
 #
-# This module is to contain common actions done with collections
+# This module contains common actions done with collections
 # This includes moving them, finding locations, putting away individual collections.
 # or putting a whole collection on a machine etc
 # These actions should involve the WHOLE plate not individual wells.  The collection is doing the whole action
+# Thats what I thought -- but the way this is written in the protocol, each operation seems to deal with one sample, not the whole plate
 module CollectionActions
     
     # stores all input collections from all operations
@@ -143,7 +144,7 @@ module CollectionActions
     def get_and_label_new_plate(plate)
         show do
         title "Get and Label Working Plate"
-        note "Get a <b>#{plate.object_type.name}</b> and lable ID: <b>#{plate.id}</b>"
+        note "Get a <b>#{plate.object_type.name}</b> and label it ID: <b>#{plate.id}</b>"
         end
     end
 end

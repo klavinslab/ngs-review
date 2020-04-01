@@ -1,17 +1,17 @@
-#Cannon Mallory
-#malloc3@uw.edu
+# Cannon Mallory
+# malloc3@uw.edu
 #
-#This is to facilitate sample management within collection
+# This is to facilitate sample management within collection
 module SampleManagement
 
     ALPHA26 = ("A"..."Z").to_a
   
-    #Gets the location string of a sample in a collection 
-    #Returns Alpha numerical string eg A1 or if the sample is
-    #in multiple locations will return A1, A2, A3
+    # Gets the location string of a sample in a collection 
+    # Returns Alpha numerical string eg A1 or if the sample is
+    # in multiple locations will return A1, A2, A3
     #
-    #@collection Collection the collection that the sample is in
-    #@sample Sample the Sample that you want the Alpha Numerical location for
+    # @collection Collection the collection that the sample is in
+    # @sample Sample the Sample that you want the Alpha Numerical location for
     def get_alpha_num_location(collection, sample)
       loc_array = get_item_sample_location(collection, sample)
       string = ""
@@ -28,7 +28,6 @@ module SampleManagement
       return string
     end
   
-  
     #Finds the location of what ever is give either item or sample
     #
     # @collection collection the collection containing the thing
@@ -40,13 +39,15 @@ module SampleManagement
       return location_array
     end
   
-  
-    #Assigns samples to specific well locations
+    # Assigns samples to specific well locations
     #
-    #input:  working_plate   Collection
+    # @param input_array [Array<FieldValue>]
+    # @param working_plate [Collection]
+    # @raise TODO add error information
     def add_fv_array_samples_to_collection(input_array, working_plate)
         sample_array = []
-        input_array = input_array.sort_by{|fv| [fv.collection.find(fv.sample).first[1],fv.collection.find(fv.sample).first[0]]}
+        input_array = input_array.sort_by{|fv| [fv.collection.find(fv.sample).first[1],
+                                                fv.collection.find(fv.sample).first[0]]}
         input_array.each_with_index do |fv, idx|
           sample = fv.sample
           sample_array << sample
@@ -57,8 +58,8 @@ module SampleManagement
     end
   
   
-    #This replaces the operations.make command.  It ensures that all items in output_fv_array
-    #Remain in the same collection (instead of being put into different collections)
+    # This replaces the operations.make command.  It ensures that all items in output_fv_array
+    # Remain in the same collection (instead of being put into different collections)
     #
     # @output_fv_array array[fv] array of field values
     # @working_plate collection the destination collection.

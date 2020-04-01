@@ -17,7 +17,7 @@ needs "Collection_Management/SampleManagement"
 needs "RNA_Seq/WorkflowValidation"
 needs "RNA_Seq/KeywordLib"
 
-# Ruby style, put each include on its own line -- I alphabative them but that's just Amy Cash style
+# Ruby style, put each include on its own line -- I alphabatize them but that's just Amy Cash style
 class Protocol
   include CollectionActions
   include CollectionDisplay
