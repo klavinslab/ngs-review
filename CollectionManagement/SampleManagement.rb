@@ -28,12 +28,11 @@ module SampleManagement
       return string
     end
   
-    #Finds the location of what ever is give either item or sample
+    # Finds the location of the item or sample that is given
     #
-    # @collection collection the collection containing the thing
-    # @part item,part, or sample that is to be found
-    # returns
-    # @Array[array[r,c]] sometimes samples are in multiple places so array of array
+    # @param collection [Collection] the collection containing the item or sample
+    # @param part [Item, Part, Sample] item, part, or sample to be found
+    # @return location_array [Array] Array of item, part, or sample locations
     def get_item_sample_location(collection, part)
       location_array = collection.find(part)
       return location_array
@@ -70,12 +69,11 @@ module SampleManagement
         end
     end
   
-    #This finds a sample from an alpha numberical string location(e.g. A1, B1)
+    # This finds a sample from an alpha numberical string location(e.g. A1, B1)
     #
-    # @collection collection a collection that the part is located in
-    # @loc string  the location in the collection for part (A1, B3, C7)
-    # Returns:
-    # @part item the item at that location
+    # @param collection [Collection] the collection that contains the part
+    # @param loc [String] the location of the part within the collection (A1, B3, C7)
+    # @return part [Item] the item at the given location
     def part_alpha_num(collection, loc)
       row = ALPHA26.find_index(loc[0,1])
       col = loc[1...].to_i - 1
@@ -85,5 +83,4 @@ module SampleManagement
       part = collection.part(row,col)
       return part
     end
-  
   end

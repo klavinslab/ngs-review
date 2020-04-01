@@ -3,7 +3,7 @@
 #
 # Module for working with collections
 # These actions should involve the WHOLE plate not individual wells.
-# The collection is doing the whole action
+# NOTE: The collection is doing the whole action
 # Thats what I thought -- but the way this is written in the protocol,
 # each operation seems to deal with one sample, not the whole plate
 module CollectionActions
@@ -18,6 +18,7 @@ module CollectionActions
         # Added spacing in and around block
         # nil? preferred to == nil
         # Made these changes throughout
+        # Spell out field values
         array_of_input_fv = op.inputs.reject { |fv| fv.collection.nil? }
         table table_of_object_locations(array_of_input_fv, location)
       end
@@ -59,7 +60,7 @@ module CollectionActions
     obj_array = obj_array.uniq
     # unless preferred to not if -- I just learned that seconds ago
     set_locations(obj_array, location) unless location.nil?
-    # not sure if we need a return here?
+    # not sure if we need a return here? -- I don't think we do
     return get_item_locations(obj_array)
   end
 
@@ -84,6 +85,7 @@ module CollectionActions
     obj_array.each do |obj|
       tab.push([obj.id, obj.object_type.name, obj.location])
     end
+    # most of the time, you don't need an explicit return in Ruby, unless there's more than one thing that could be returned 
     return tab
   end
 
