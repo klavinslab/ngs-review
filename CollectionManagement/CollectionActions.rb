@@ -1,150 +1,154 @@
 # Cannon Mallory
 # malloc3@uw.edu
 #
-# This module contains common actions done with collections
-# This includes moving them, finding locations, putting away individual collections.
-# or putting a whole collection on a machine etc
-# These actions should involve the WHOLE plate not individual wells.  The collection is doing the whole action
-# Thats what I thought -- but the way this is written in the protocol, each operation seems to deal with one sample, not the whole plate
+# Module for working with collections
+# These actions should involve the WHOLE plate not individual wells.
+# The collection is doing the whole action
+# Thats what I thought -- but the way this is written in the protocol,
+# each operation seems to deal with one sample, not the whole plate
 module CollectionActions
-    
-    # stores all input collections from all operations
-    #
-    # @param operations [OperationList] the operation list that all input collections should be stored
-    # @param location [String] the location that the items are to be moved to
-    def store_input_collections(operations, location: nil)
-        show do 
-           title 'Put Away the Following Items'
-           operations.each do |op|
-              array_of_input_fv = op.inputs.reject{|fv| fv.collection == nil}
-              table table_of_object_locations(array_of_input_fv, location)
-          end
-        end
+  # Store all input collections from all operations
+  #
+  # @param operations [OperationList] the  list of operations
+  # @param location [String] the location that the items are to be moved to
+  def store_input_collections(operations, location: nil)
+    show do
+      title 'Put Away the Following Items'
+      operations.each do |op|
+        # Added spacing in and around block
+        # nil? preferred to == nil
+        # Made these changes throughout
+        array_of_input_fv = op.inputs.reject { |fv| fv.collection.nil? }
+        table table_of_object_locations(array_of_input_fv, location)
+      end
     end
-    
-    # stores all output collections from all operations
-    #
-    # @param operations [OperationList] the operation list that all output collections should be stored
-    def store_output_collections(operations, location: nil)
-        show do 
-           title 'Put Away the Following Items'
-           array_of_input_fv = []
-           operations.each do |op|
-            array_of_input_fv += op.outputs.reject{|fv| fv.collection == nil}
-           end
-           table table_of_object_locations(array_of_input_fv, location)
-        end
+  end
+
+  # stores all output collections from all operations
+  #
+  # @param operations [OperationList] the operation list that all output collections should be stored
+  def store_output_collections(operations, location: nil)
+    show do
+      title 'Put Away the Following Items'
+      array_of_input_fv = []
+      operations.each do |op|
+        array_of_input_fv += op.outputs.reject { |fv| fv.collection.nil? }
+      end
+      table table_of_object_locations(array_of_input_fv, location)
     end
-    
-    # Shows the locations of all the collections in the array of FV.
-    # Can move the location to optional "location"
-    #
-    # @raise [error] if 
-    # @param array_of_fv [Array<FieldValues>] an array of FieldValues
-    # @param location [string] Optional moves all collections to that location
-    # @return [Table] Description of Table   
-    def table_of_object_locations(array_of_fv, location: nil)
-        obj_array = []
-        array_of_fv.each do |fv|
-            if fv.collection != nil
-                obj_array.push(fv.collection)
-            elsif fv.item != nil
-                obj_array.push(fv.item)
-            else
-                raise "Invalid class.  Neither collection nor item."
-            end
-        end
-        obj_array = obj_array.uniq
-        set_locations(obj_array, location) if location != nil
-        return get_item_locations(obj_array)
+  end
+
+  # Shows the locations of all the collections in the array of FV.
+  # Can move the location to optional "location"
+  #
+  # @raise [error] if
+  # @param array_of_fv [Array<FieldValues>] an array of FieldValues
+  # @param location [string] Optional moves all collections to that location
+  # @return [Table] Description of Table
+  def table_of_object_locations(array_of_fv, location: nil)
+    obj_array = []
+    array_of_fv.each do |fv|
+      if fv.collection.nil?
+        obj_array.push(fv.collection)
+      elsif fv.item.nil?
+        obj_array.push(fv.item)
+      else
+        raise 'Invalid class.  Neither collection nor item.'
+      end
+    end
+    obj_array = obj_array.uniq
+    # unless preferred to not if -- I just learned that seconds ago
+    set_locations(obj_array, location) unless location.nil?
+    # not sure if we need a return here?
+    return get_item_locations(obj_array)
+  end
+
+  # Sets the location of all objects in array to some given locations
+  #
+  # @param obj_array  Array[Collection] or Array[Items] an array of any objects that extend class item
+  # @param location [String] the location to be moved to (just string or Wizard if Wizard Exist)
+  def set_locations(obj_array, location)
+    obj_array.each do |obj|
+      obj.move(location)
+    end
+  end
+
+  # Instructions to store a specific collection
+  #
+  # @param collection [Collection] the collection that is to be put away
+  # @return tab [Array<Array>] of collections and their locations
+  # Use a variable that denotes what is in the table, rather than tab
+  # Especially since we have an aquarium built in called table
+  def get_item_locations(obj_array)
+    tab = [['ID', 'Collection Type', 'Location']]
+    obj_array.each do |obj|
+      tab.push([obj.id, obj.object_type.name, obj.location])
+    end
+    return tab
+  end
+
+  # Instructions to store a specific item
+  #
+  # @param obj_item [Item/Object] that extends class item or Array
+  #        extends class item]         all items that need to be stored
+  # @param location [String] Sets the location of the items if included
+  def store_items(obj_item, location: nil)
+    show do
+      title 'Put Away the Following Items'
+      if obj_item.class != Array
+        set_locations([obj_item], location) if location.nil?
+        table get_item_locations([obj_item])
+      else
+        set_locations(obj_item, location) if location.nil?
+        table get_item_location(obj_item)
+      end
+    end
+  end
+
+  # Gives directions to throw away an object (collection or item)
+  #
+  # @param obj or array of Item or Object that extends class Item  eg collection
+  # @param hazardous [boolean] if hazardous then true
+  def trash_object(obj_array, hazardous: true)
+    # toss QC plate
+    if obj_array.class != Array
+      obj_array = [obj_array]
     end
 
-    # Sets the location of all objects in array to some given locations
-    #
-    # @param obj_array  Array[Collection] or Array[Items] an array of any objects that extend class item
-    # @param location [String] the location to be moved to (just string or Wizard if Wizard Exist)
-    def set_locations(obj_array, location)
-        obj_array.each do |obj|
-            obj.move(location)
+    show do
+      title 'Trash the following items'
+      tab = [['Item', 'Waste Container']]
+      obj_array.each do |obj|
+        obj.mark_as_deleted
+        if hazardous
+          waste_container = 'Biohazard Waste'
+        else
+          waste_container = 'Trash Can'
         end
+        tab.push([obj.id, waste_container])
+      end
+      table tab
     end
-    
-    # Instructions to store a specific collection
-    #
-    # @param collection [Collection] the collection that is to be put away
-    # @return tab [Array<Array>] of collections and their locations
-    # Spell out table for variable name or better, use a variable that denotes what's in the table 
-    # Especially since we have an aquarium built in called table 
-    def get_item_locations(obj_array)
-        tab = [['ID', 'Collection Type', 'Location']]
-        obj_array.each do |obj|
-            tab.push([obj.id, obj.object_type.name, obj.location])
-        end
-        return tab
-    end
-    
-    # Instructions to store a specific item
-    #
-    # @param obj_item [Item/Object that extends class item or Array[Item/item that 
-    #       extends class item]         all items that need to be stored
-    # @param location [String] Sets the location of the items if included
-    def store_items(obj_item, location: nil)
-        show do
-            title "Put Away the Following Items"
-            if obj_item.class != Array
-                set_locations([obj_item], location) if location != nil
-                table get_item_locations([obj_item])
-            else
-                set_locations(obj_item, location) if location != nil
-                table get_item_location(obj_item)
-            end
-        end
-    end
+  end
 
-    # Gives directions to throw away an object (collection or item)
-    #
-    # @param obj or array of Item or Object that extends class Item  eg collection
-    # @param hazardous [boolean] if hazardous then true
-    def trash_object(obj_array, hazardous: true)
-        #toss QC plate
-        if obj_array.class != Array
-            obj_array = [obj_array]
-        end
-        
-        show do
-            title "Trash the following items"
-            tab = [['Item', 'Waste Container']]
-            obj_array.each do |obj|
-                obj.mark_as_deleted
-                if hazardous
-                    waste_container = "Biohazard Waste"
-                else
-                    waste_container = "Trash Can"
-                end
-                tab.push([obj.id, waste_container])
-            end
-            table tab
-        end
-    end
+  # makes a new plate and provides instructions to label said plate
+  #
+  # @param c_type [string] the collection type
+  # @param label_plate [boolean] whether to get and label plate or no default true
+  # @return working_plate [Collection]
+  def make_new_plate(c_type, label_plate: true)
+    working_plate = Collection.new_collection(c_type)
+    get_and_label_new_plate(working_plate) if label_plate
+    return working_plate
+  end
 
-    # makes a new plate and provides instructions to label said plate
-    #
-    # @param c_type [string] the collection type
-    # @param label_plate [boolean] whether to get and label plate or no default true
-    # @return working_plate [Collection]
-    def make_new_plate(c_type, label_plate: true)
-        working_plate = Collection.new_collection(c_type)
-        get_and_label_new_plate(working_plate) if label_plate
-        return working_plate
+  # Instructions on getting and labeling new plate
+  #
+  # @param plate [Collection] plate to be retrieved and labeled
+  def get_and_label_new_plate(plate)
+    show do
+      title 'Get and Label Working Plate'
+      note "Get a <b>#{plate.object_type.name}</b> and label it ID: <b>#{plate.id}</b>"
     end
-
-    # Instructions on getting and labeling new plate
-    #
-    # @param plate [Collection] plate to be retrieved and labeled
-    def get_and_label_new_plate(plate)
-        show do
-        title "Get and Label Working Plate"
-        note "Get a <b>#{plate.object_type.name}</b> and label it ID: <b>#{plate.id}</b>"
-        end
-    end
+  end
 end
