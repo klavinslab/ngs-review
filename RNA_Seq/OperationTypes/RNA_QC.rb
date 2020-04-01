@@ -41,28 +41,29 @@ class Protocol
     operations.each do |op|
       input_fv_array = op.input_array(INPUT_ARRAY)
      # Same as before, not sure why initial samples are an array? I think I'm missing something 
-      # Also, spell out field value 
+     # Spell out field value 
       add_fv_array_samples_to_collection(input_fv_array, working_plate)
-      # Transfer what? 
+      # Transfer what -- make name more descriptive 
       transfer_from_array_collections(input_fv_array, working_plate, TRANSFER_VOL)
     end
     
     store_input_collections(operations)
     take_qc_measurements(working_plate)
     trash_object(working_plate)
-
   end
-
 
   # Instruction on taking the QC measurements themselves.
   # Currently not operational but associates random concentrations for testing
   #
   # TODO complete this and make it actually look at CSV Files
   def take_qc_measurments(working_plate)
+    # change rcx to be clear what is meant here 
+    # This is another thing where we name stuff like this all the time, but shouldn't. 
     input_rcx = []
     operations.each do |op|
       input_array = op.input_array(INPUT_ARRAY)
       input_items = input_array.map{|fv| fv.item}
+      # Did you mean to write arry -- or just accidently leave out the extra a? 
       arry_sample = input_array.map{|fv| fv.sample}
       input_items.each_with_index do |item, idx|
         item.associate(CON_KEY, rand(50..100))
