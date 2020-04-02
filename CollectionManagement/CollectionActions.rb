@@ -15,10 +15,6 @@ module CollectionActions
     show do
       title 'Put Away the Following Items'
       operations.each do |op|
-        # Added spacing in and around block
-        # nil? preferred to == nil
-        # Made these changes throughout
-        # Spell out field values
         array_of_input_fv = op.inputs.reject { |fv| fv.collection.nil? }
         table table_of_object_locations(array_of_input_fv, location)
       end
@@ -58,10 +54,12 @@ module CollectionActions
       end
     end
     obj_array = obj_array.uniq
-    # unless preferred to not if -- I just learned that seconds ago
     set_locations(obj_array, location) unless location.nil?
     # not sure if we need a return here? -- I don't think we do
-    return get_item_locations(obj_array)
+    # It may not need the word return (I am always confused in ruby about
+    # when it does and does not) however we do need to return the table
+    # for a presumed show block where this would be used...?
+    get_item_locations(obj_array)
   end
 
   # Sets the location of all objects in array to some given locations
@@ -85,14 +83,13 @@ module CollectionActions
     obj_array.each do |obj|
       tab.push([obj.id, obj.object_type.name, obj.location])
     end
-    # most of the time, you don't need an explicit return in Ruby, unless there's more than one thing that could be returned 
-    return tab
+    tab
   end
 
   # Instructions to store a specific item
   #
   # @param obj_item [Item/Object] that extends class item or Array
-  #        extends class item]         all items that need to be stored
+  #        extends class item all items that need to be stored
   # @param location [String] Sets the location of the items if included
   def store_items(obj_item, location: nil)
     show do
@@ -141,7 +138,7 @@ module CollectionActions
   def make_new_plate(c_type, label_plate: true)
     working_plate = Collection.new_collection(c_type)
     get_and_label_new_plate(working_plate) if label_plate
-    return working_plate
+    working_plate
   end
 
   # Instructions on getting and labeling new plate
