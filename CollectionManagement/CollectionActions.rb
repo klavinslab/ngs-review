@@ -55,11 +55,7 @@ module CollectionActions
     end
     obj_array = obj_array.uniq
     set_locations(obj_array, location) unless location.nil?
-    # not sure if we need a return here? -- I don't think we do
-    # It may not need the word return (I am always confused in ruby about
-    # when it does and does not) however we do need to return the table
-    # for a presumed show block where this would be used...?
-    get_item_locations(obj_array)
+    get_collection_locations(obj_array)
   end
 
   # Sets the location of all objects in array to some given locations
@@ -75,13 +71,11 @@ module CollectionActions
   # Instructions to store a specific collection
   #
   # @param collection [Collection] the collection that is to be put away
-  # @return tab [Array<Array>] of collections and their locations
-  # Use a variable that denotes what is in the table, rather than tab
-  # Especially since we have an aquarium built in called table
-  def get_item_locations(obj_array)
-    tab = [['ID', 'Collection Type', 'Location']]
+  # @return location_table [Array<Array>] of collections and their locations
+  def get_collection_locations(obj_array)
+    location_table = [['ID', 'Collection Type', 'Location']]
     obj_array.each do |obj|
-      tab.push([obj.id, obj.object_type.name, obj.location])
+      location_table.push([obj.id, obj.object_type.name, obj.location])
     end
     tab
   end
@@ -96,7 +90,7 @@ module CollectionActions
       title 'Put Away the Following Items'
       if obj_item.class != Array
         set_locations([obj_item], location) if location.nil?
-        table get_item_locations([obj_item])
+        table get_collection_locations([obj_item])
       else
         set_locations(obj_item, location) if location.nil?
         table get_item_location(obj_item)

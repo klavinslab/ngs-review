@@ -10,7 +10,6 @@
 needs "Standard Libs/Debug"
 needs "Standard Libs/CommonInputOutputNames"
 needs "Standard Libs/Units"
-
 needs "Collection_Management/CollectionDisplay"
 needs "Collection_Management/CollectionTransfer"
 needs "Collection_Management/CollectionActions"
@@ -22,8 +21,14 @@ require 'csv'
 
 
 class Protocol
-  include Debug, CollectionDisplay, CollectionTransfer, SampleManagement, CollectionActions
-  inclde CommonInputOutputNames, KeywordLib, CsvDebugLib
+  include Debug
+  include CollectionDisplay
+  include CollectionTransfer
+  include SampleManagement
+  include CollectionActions
+  include CommonInputOutputNames
+  include KeywordLib
+  include CsvDebugLib
 
   PLATE_ID = "Plate ID"
   WELL_LOCATION = "Well Location"
@@ -38,7 +43,7 @@ class Protocol
     #find all these parts
     col_parts_hash = sample_from_csv
 
-    working_plate = make_new_plate(C_TYPE)
+    working_plate = make_new_plate(COLLECTION_TYPE)
 
     col_parts_hash.each do |collection, parts|
       show do

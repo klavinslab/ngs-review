@@ -10,9 +10,6 @@
 #with the original sample for use later.
 
 
-#Currently build plate needs a bit of work.  It works by order of input array and not by order of sample location on plate
-
-
 needs "Standard Libs/Debug"
 needs "Standard Libs/CommonInputOutputNames"
 needs "Standard Libs/Units"
@@ -20,14 +17,19 @@ needs "Standard Libs/Units"
 needs "Collection_Management/CollectionDisplay"
 needs "Collection_Management/CollectionTransfer"
 needs "Collection_Management/CollectionActions"
-needs "Collction_Management/SampleManagement"
+needs "Collection_Management/SampleManagement"
 needs "RNA_Seq/WorkflowValidation"
 needs "RNA_Seq/KeywordLib"
 
 class Protocol
-  include Debug, CollectionDisplay, CollectionTransfer, SampleManagement, CollectionActions
-  include WorkflowValidation, CommonInputOutputNames, KeywordLib
-  C_TYPE = "96 Well Sample Plate"
+  include Debug
+  include CollectionDisplay
+  include CollectionTransfer
+  include SampleManagement
+  include CollectionActions
+  include WorkflowValidation
+  include CommonInputOutputNames
+  include KeywordLib
 
   TRANSFER_VOL = 20   #volume of sample to be transfered in ul
 
@@ -40,8 +42,8 @@ class Protocol
 
     multi_plate = multi_input_plates?(operations)
 
-    working_plate = make_new_plate(C_TYPE, multi_plate)
-  
+    working_plate = make_new_plate(COLLECTION_TYPE, multi_plate)
+
     operations.retrieve
 
     operations.each do |op|
@@ -49,10 +51,10 @@ class Protocol
       output_fv_array = op.output_array(OUTPUT_ARRAY)
       add_fv_array_samples_to_collection(input_fv_array, working_plate)
       make_output_plate(output_fv_array, working_plate)
-      transfer_from_array_collections(input_fv_array, working_plate, TRANSFER_VOL) if multi_plate
+      transfer_to_collection_from_fv_array(input_fv_array, working_plate, TRANSFER_VOL) if multi_plate
     end
 
-    if !multi_plate
+    unless multi_plate
       input_plate = operations.first.input_array(INPUT_ARRAY).first.collection
       relabel_plate(input_plate,working_plate) if !multi_plate
       input_plate.mark_as_deleted
@@ -61,18 +63,17 @@ class Protocol
     end
 
     normalization_pooling(working_plate)
-
     store_output_collections(operations, 'Freezer')
   end
 
   #Instructions for performing RNA_PREP
   #
-  # @working_plate collection the plate that has all samples in it
+  #@param working_plate [collection] the plate with samples
   def normalization_pooling(working_plate)
     show do
       title "Do the Normalization Pooling Steps"
       note "Run typical Normalization Pooling protocol with plate #{working_plate.id}"
-      table highlight_non_empty(working_plate)
+      table highlight_non_empty(working_plate, check: false)
     end
   end
 end

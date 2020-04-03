@@ -5,10 +5,9 @@
 
 module KeywordLib
     MAX_INPUTS = 96
-    C_TYPE = "96 Well Sample Plate"
+    COLLECTION_TYPE = "96 Well Sample Plate"
     CON_KEY = "Stock Conc (ng/ul)"
     QC2_KEY = "C-DNA QC"
-    CSV_KEY = "csv"
 
     ADAPTER_PLATE = "Adapter Plate"
     ADAPTER = "Adapter Item"
