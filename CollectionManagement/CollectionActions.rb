@@ -16,7 +16,7 @@ module CollectionActions
       title 'Put Away the Following Items'
       operations.each do |op|
         array_of_input_fv = op.inputs.reject { |fv| fv.collection.nil? }
-        table table_of_object_locations(array_of_input_fv, location)
+        table table_of_object_locations(array_of_input_fv, location: location)
       end
     end
   end
@@ -31,7 +31,7 @@ module CollectionActions
       operations.each do |op|
         array_of_input_fv += op.outputs.reject { |fv| fv.collection.nil? }
       end
-      table table_of_object_locations(array_of_input_fv, location)
+      table table_of_object_locations(array_of_input_fv, location: location)
     end
   end
 
@@ -45,12 +45,12 @@ module CollectionActions
   def table_of_object_locations(array_of_fv, location: nil)
     obj_array = []
     array_of_fv.each do |fv|
-      if fv.collection.nil?
+      if !fv.collection.nil?
         obj_array.push(fv.collection)
-      elsif fv.item.nil?
+      elsif !fv.item.nil?
         obj_array.push(fv.item)
       else
-        raise 'Invalid class.  Neither collection nor item.'
+        raise "Invalid class.  Neither collection nor item. Class = #{fv.class}"
       end
     end
     obj_array = obj_array.uniq
@@ -77,7 +77,7 @@ module CollectionActions
     obj_array.each do |obj|
       location_table.push([obj.id, obj.object_type.name, obj.location])
     end
-    tab
+    location_table
   end
 
   # Instructions to store a specific item

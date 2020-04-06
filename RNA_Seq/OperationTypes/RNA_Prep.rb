@@ -1,17 +1,7 @@
 #Cannon Mallory
 #UW-BIOFAB
 #03/04/2019
-#malloc3@uw.edu
-#
-#
-#This protocol is for total RNA QC.  It Will take in a batch of samples, replate these
-#samples together onto a 96 well plate that will then go through a QC protocols including
-#getting the concentrations of the original sampole.  These concentrations will then be associated
-#with the original sample for use later.
-
-
-#Currently build plate needs a bit of work.  It works by order of input array and not by order of sample location on plate
-
+#malloc3@uw.edux
 
 needs "Standard Libs/Debug"
 needs "Standard Libs/CommonInputOutputNames"
@@ -66,7 +56,7 @@ class Protocol
     associate_plate_to_plate(working_plate, adapter_plate, ADAPTER_PLATE, ADAPTER)
     store_input_collections(operations)
     rna_prep_steps(working_plate)
-    store_output_collections(operations, 'Freezer')
+    store_output_collections(operations, location: 'Freezer')
   end
 
   # Instructions for performing RNA_PREP

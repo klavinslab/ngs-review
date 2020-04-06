@@ -53,9 +53,9 @@ module CollectionTransfer
                                 plate (ID:#{working_collection.id}) per tables below"
       note "Separator"
       note "Stock Plate (ID: #{input_collection.id}):"
-      table highlight_rcx(input_collection, input_rcx)
+      table highlight_collection_rcx(input_collection, input_rcx, check: false)
       note "Working Plate (ID: #{working_collection}):"
-      table highlight_rcx(working_collection, output_rcx)
+      table highlight_collection_rcx(working_collection, output_rcx, check: false)
     end
   end
 

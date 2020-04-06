@@ -2,13 +2,6 @@
 #UW-BIOFAB
 #03/04/2019
 #malloc3@uw.edu
-#
-#
-#This protocol is for total RNA QC.  It Will take in a batch of samples, replate these
-#samples together onto a 96 well plate that will then go through a QC protocols including
-#getting the concentrations of the original sampole.  These concentrations will then be associated
-#with the original sample for use later.
-
 
 needs "Standard Libs/Debug"
 needs "Standard Libs/CommonInputOutputNames"
@@ -36,13 +29,13 @@ class Protocol
 
   def main
 
-    validate_inputs(operations, inputs_match_outputs = true)
+    validate_inputs(operations, inputs_match_outputs: true)
 
     validate_cdna_qc(operations)
 
     multi_plate = multi_input_plates?(operations)
 
-    working_plate = make_new_plate(COLLECTION_TYPE, multi_plate)
+    working_plate = make_new_plate(COLLECTION_TYPE, label_plate: multi_plate)
 
     operations.retrieve
 
@@ -63,7 +56,7 @@ class Protocol
     end
 
     normalization_pooling(working_plate)
-    store_output_collections(operations, 'Freezer')
+    store_output_collections(operations, location: 'Freezer')
   end
 
   #Instructions for performing RNA_PREP

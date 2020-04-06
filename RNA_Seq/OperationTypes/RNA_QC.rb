@@ -3,10 +3,6 @@
 # 03/04/2019
 # malloc3@uw.edu
 
-# I moved this description to the protocol documentation page
-# Note todos with TODO
-# TODO: Currently build plate needs a bit of work.  It works by order of input array and not by order of sample location on plate
-
 needs 'Standard Libs/Debug'
 needs 'Standard Libs/CommonInputOutputNames'
 needs 'Standard Libs/Units'
@@ -32,6 +28,8 @@ class Protocol
 
 
   TRANSFER_VOL = 20 # volume of sample to be transfered in ul
+  CSV_HEADERS = ["Well Position", "Conc(ng/ul)"]
+  CSV_LOCATION = "TBD Location of file"
 
   def main
     validate_inputs(operations)
@@ -41,8 +39,8 @@ class Protocol
 
     operations.each do |op|
       input_field_value_array = op.input_array(INPUT_ARRAY)
-      add_fv_array_samples_to_collection(input_fv_array, working_plate)
-      transfer_to_collection_from_fv_array(input_fv_array, working_plate, TRANSFER_VOL)
+      add_fv_array_samples_to_collection(input_field_value_array, working_plate)
+      transfer_to_collection_from_fv_array(input_field_value_array, working_plate, TRANSFER_VOL)
     end
 
     store_input_collections(operations)
@@ -55,7 +53,7 @@ class Protocol
   # Currently not operational but associates random concentrations for testing
   #
   # @param working_plate [collection] the plate of samples needing measurements
-  def take_qc_measurments(working_plate)
+  def take_qc_measurements(working_plate)
     # change rcx to be clear what is meant here
     # This is another thing where we name stuff like this all the time, but shouldn't. I'm trying to be the change I want to see.
     show do
@@ -106,7 +104,7 @@ class Protocol
     show do
       title 'Measurements Take'
       note 'Recorded Concentrations are listed below'
-      table highlight_rcx(working_plate, rcx_array, check: false)
+      table highlight_collection_rcx(working_plate, rcx_array, check: false)
     end
   end
 end

@@ -2,9 +2,6 @@
 #UW-BIOFAB
 #03/04/2019
 #malloc3@uw.edu
-#
-#
-#This Protocol is to Quality check the C-DNA created.
 
 needs "Standard Libs/Debug"
 needs "Standard Libs/CommonInputOutputNames"
@@ -33,7 +30,7 @@ class Protocol
   def main
     validate_inputs(operations)
 
-   workingt_plate = make_new_plate(COLLECTION_TYPE)
+    working_plate = make_new_plate(COLLECTION_TYPE)
 
     operations.retrieve
 
@@ -75,7 +72,7 @@ class Protocol
       note "Please Attach excel files"
       note "For testing purposes each sample will assume to pass"
       note "This will eventually come from a CSV file"
-      table highlight_rcx(working_plate, input_rcx, check: false)
+      table highlight_collection_rcx(working_plate, input_rcx, check: false)
     end
   end
 end

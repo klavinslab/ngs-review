@@ -35,8 +35,7 @@ module CollectionDisplay
     tbl[row][col] = {content: id, class: 'td-filled-slot', check: check}
   end
 
-
-
+  # Highlights all cells in ROW/COLUMN/X  (TODO TABLE CLASS)
   # Highlights all cells in ROW/COLUMN/X (TODO TABLE CLASS)
   # X can be any string that is to be displayed in cell
   #
@@ -47,10 +46,12 @@ module CollectionDisplay
   #     x = string
   # @return [table]
   def highlight_rcx(table, rcx_list, check: true)
+    raise "Passed Collection when Table needed.  You may want to use
+          'highlight_collection_rcx' instead" if table.class == 'Collection'
     rcx_list.each do |rcx|
-      rcx_check = rcx.push(check)
-      highlight_rcx_check(table, rcx_check)
+      rcx.push(check)
     end
+    highlight_rcx_check(table, rcx_list)
     table
   end
 
@@ -65,12 +66,11 @@ module CollectionDisplay
   #     check = boolean
   # @return [table]
   def highlight_rcx_check(table, rcx_check_list)
-    rcx_check_list.each do |r,c,x,check|
-      highlight(table, r, c, x, check)
+    rcx_check_list.each do |r, c, x, check|
+      highlight(table, r, c, x, check: check)
     end
     table
   end
-
 
   # Highlights all cells in ROW/COLUMN/X (CHANGED NAME)
   # X can be any string that is to be displayed in cell
@@ -82,10 +82,9 @@ module CollectionDisplay
   #     x = string
   # @return [Table]
   def highlight_collection_rcx(collection, rcx_list, check: true)
-    tbl = create_collection_table collection
-    highlight_rcx(tbl, rcx_list, check)
+    tbl = create_collection_table(collection)
+    highlight_rcx(tbl, rcx_list, check: check)
   end
-
 
   # TODO TABLE LIB
   # Highlights all cells listed in rc_list
@@ -101,7 +100,7 @@ module CollectionDisplay
     rcx_list = rc_list.map { |r, c|
       block_given? ? [r, c, yield(r, c)] : [r, c, ""]
     }
-    highlight_rcx(table, rcx_list, check)
+    highlight_rcx(table, rcx_list, check: check)
   end
 
 
