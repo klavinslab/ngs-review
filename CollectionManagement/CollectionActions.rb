@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Cannon Mallory
 # malloc3@uw.edu
 #
@@ -85,7 +87,7 @@ module CollectionActions
     obj_array.each do |obj|
       tab.push([obj.id, obj.object_type.name, obj.location])
     end
-    # most of the time, you don't need an explicit return in Ruby, unless there's more than one thing that could be returned 
+    # most of the time, you don't need an explicit return in Ruby, unless there's more than one thing that could be returned
     return tab
   end
 

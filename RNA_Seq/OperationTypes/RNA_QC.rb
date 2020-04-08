@@ -1,3 +1,5 @@
+# frozen_string_literal: true 
+
 # Cannon Mallory
 # UW-BIOFAB
 # 03/04/2019
@@ -5,7 +7,8 @@
 
 # I moved this description to the protocol documentation page
 # Note todos with TODO
-# TODO: Currently build plate needs a bit of work.  It works by order of input array and not by order of sample location on plate
+# TODO: Currently build plate needs a bit of work.
+# It works by order of input array and not by order of sample location on plate
 
 needs 'Standard Libs/Debug'
 needs 'Standard Libs/CommonInputOutputNames'
@@ -61,12 +64,13 @@ class Protocol
   # TODO complete this and make it actually look at CSV Files
   def take_qc_measurments(working_plate)
     # change rcx to be clear what is meant here
-    # This is another thing where we name stuff like this all the time, but shouldn't. I'm trying to be the change I want to see. 
+    # This is another thing where we name stuff like this all the time,
+    # but shouldn't. I'm trying to be the change I want to see.
     input_rcx = []
     operations.each do |op|
       input_array = op.input_array(INPUT_ARRAY)
       input_items = input_array.map { |fv| fv.item }
-      # Did you mean to write arry -- or just accidently leave out the extra a? 
+      # Did you mean to write arry -- or just accidently leave out the extra a?
       arry_sample = input_array.map { |fv| fv.sample }
       input_items.each_with_index do |item, idx|
         item.associate(CON_KEY, rand(50..100))

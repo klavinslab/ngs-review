@@ -1,3 +1,5 @@
+# frozen_string_litera: true
+
 # Cannon Mallory
 # malloc3@uw.edu
 #
@@ -45,6 +47,7 @@ module SampleManagement
     # @raise TODO add error information
     def add_fv_array_samples_to_collection(input_array, working_plate)
         sample_array = []
+        # collection, finds collection associated with child_item_id 
         input_array = input_array.sort_by{|fv| [fv.collection.find(fv.sample).first[1],
                                                 fv.collection.find(fv.sample).first[0]]}
         input_array.each_with_index do |fv, idx|
