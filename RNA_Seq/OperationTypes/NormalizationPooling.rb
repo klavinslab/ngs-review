@@ -1,47 +1,52 @@
-#Cannon Mallory
-#UW-BIOFAB
-#03/04/2019
-#malloc3@uw.edu
+# Cannon Mallory
+# UW-BIOFAB
+# 03/04/2019
+# malloc3@uw.edu
 #
-#
-#This protocol is for total RNA QC.  It Will take in a batch of samples, replate these
-#samples together onto a 96 well plate that will then go through a QC protocols including
-#getting the concentrations of the original sampole.  These concentrations will then be associated
-#with the original sample for use later.
+# This protocol is for total RNA QC.
+# It will take in a batch of samples, replate them
+# together onto a 96 well plate that will then go through a QC protocols including
+# getting the concentrations of the original sample.
+# These concentrations will then be associated
+# with the original sample for use later.
+# Currently build plate needs a bit of work.
+# It works by order of input array and not by order of sample location on plate
 
+needs 'Standard Libs/Debug'
+needs 'Standard Libs/CommonInputOutputNames'
+needs 'Standard Libs/Units'
 
-#Currently build plate needs a bit of work.  It works by order of input array and not by order of sample location on plate
-
-
-needs "Standard Libs/Debug"
-needs "Standard Libs/CommonInputOutputNames"
-needs "Standard Libs/Units"
-
-needs "Collection_Management/CollectionDisplay"
-needs "Collection_Management/CollectionTransfer"
-needs "Collection_Management/CollectionActions"
-needs "Collction_Management/SampleManagement"
-needs "RNA_Seq/WorkflowValidation"
-needs "RNA_Seq/KeywordLib"
+needs 'Collection_Management/CollectionDisplay'
+needs 'Collection_Management/CollectionTransfer'
+needs 'Collection_Management/CollectionActions'
+needs 'Collction_Management/SampleManagement'
+needs 'RNA_Seq/WorkflowValidation'
+needs 'RNA_Seq/KeywordLib'
 
 class Protocol
-  include Debug, CollectionDisplay, CollectionTransfer, SampleManagement, CollectionActions
-  include WorkflowValidation, CommonInputOutputNames, KeywordLib
-  C_TYPE = "96 Well Sample Plate"
+  include Debug
+  include CollectionDisplay
+  include CollectionTransfer
+  include SampleManagement
+  include CollectionActions
+  include WorkflowValidation
+  include CommonInputOutputNames
+  include KeywordLib
 
-  TRANSFER_VOL = 20   #volume of sample to be transfered in ul
+  C_TYPE = '96 Well Sample Plate'
 
+  TRANSFER_VOL = 20 # volume of sample to be transfered in ul
 
   def main
 
-    validate_inputs(operations, inputs_match_outputs = true)
+    validate_inputs(operations, inputs_match_outputs: true)
 
     validate_cdna_qc(operations)
 
     multi_plate = multi_input_plates?(operations)
 
     working_plate = make_new_plate(C_TYPE, multi_plate)
-  
+
     operations.retrieve
 
     operations.each do |op|
@@ -65,12 +70,12 @@ class Protocol
     store_output_collections(operations, 'Freezer')
   end
 
-  #Instructions for performing RNA_PREP
+  # Instructions for performing RNA_PREP
   #
-  # @working_plate collection the plate that has all samples in it
+  # @param working_plate [Collection] the plate that has all samples in it
   def normalization_pooling(working_plate)
     show do
-      title "Do the Normalization Pooling Steps"
+      title 'Do the Normalization Pooling Steps'
       note "Run typical Normalization Pooling protocol with plate #{working_plate.id}"
       table highlight_non_empty(working_plate)
     end

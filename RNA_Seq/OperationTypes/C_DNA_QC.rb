@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Cannon Mallory
 # UW-BIOFAB
 # 03/04/2019
@@ -8,7 +10,6 @@
 needs 'Standard Libs/Debug'
 needs 'Standard Libs/CommonInputOutputNames'
 needs 'Standard Libs/Units'
-
 needs 'Collection_Management/CollectionDisplay'
 needs 'Collection_Management/CollectionTransfer'
 needs 'Collection_Management/CollectionActions'
@@ -30,7 +31,7 @@ class Protocol
   def main
     validate_inputs(operations)
 
-    workingt_plate = make_new_plate(C_TYPE)
+    working_plate = make_new_plate(C_TYPE)
 
     operations.retrieve
 
@@ -53,8 +54,8 @@ class Protocol
     input_rcx = []
     operations.each do |op|
       input_array = op.input_array(INPUT_ARRAY)
-      input_items = input_array.map{|fv| fv.item}
-      arry_sample = input_array.map{|fv| fv.sample}
+      input_items = input_array.map { |fv| fv.item }
+      arry_sample = input_array.map { |fv| fv.sample }
       input_items.each_with_index do |item, idx|
         item.associate(QC2_KEY, 'Pass')
         sample = arry_sample[idx]
@@ -75,4 +76,3 @@ class Protocol
     end
   end
 end
- 

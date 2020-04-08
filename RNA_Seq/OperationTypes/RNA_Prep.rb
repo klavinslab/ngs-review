@@ -1,40 +1,44 @@
-#Cannon Mallory
-#UW-BIOFAB
-#03/04/2019
-#malloc3@uw.edu
+# Cannon Mallory
+# UW-BIOFAB
+# 03/04/2019
+# malloc3@uw.edu
 #
-#
-#This protocol is for total RNA QC.  It Will take in a batch of samples, replate these
-#samples together onto a 96 well plate that will then go through a QC protocols including
-#getting the concentrations of the original sampole.  These concentrations will then be associated
-#with the original sample for use later.
+# This protocol is for total RNA QC.  It Will take in a batch of samples, replate these
+# samples together onto a 96 well plate that will then go through a QC protocols including
+# getting the concentrations of the original sampole.  These concentrations will then be associated
+# with the original sample for use later.
 
+# Currently build plate needs a bit of work.  It works by order of input array and not by order of sample location on plate
 
-#Currently build plate needs a bit of work.  It works by order of input array and not by order of sample location on plate
-
-
-needs "Standard Libs/Debug"
-needs "Standard Libs/CommonInputOutputNames"
-needs "Standard Libs/Units"
-
-needs "Collection_Management/CollectionDisplay"
-needs "Collection_Management/CollectionTransfer"
-needs "Collection_Management/CollectionActions"
-needs "Collction_Management/SampleManagement"
-needs "RNA_Seq/WorkflowValidation"
-needs "RNA_Seq/KeywordLib"
-needs "RNA_Seq/CsvDebugLib"
+needs 'Standard Libs/Debug'
+needs 'Standard Libs/CommonInputOutputNames'
+needs 'Standard Libs/Units'
+needs 'Collection_Management/CollectionDisplay'
+needs 'Collection_Management/CollectionTransfer'
+needs 'Collection_Management/CollectionActions'
+needs 'Collction_Management/SampleManagement'
+needs 'RNA_Seq/WorkflowValidation'
+needs 'RNA_Seq/KeywordLib'
+needs 'RNA_Seq/CsvDebugLib'
 
 require 'csv'
 
 class Protocol
-  include Debug, CollectionDisplay, CollectionTransfer, SampleManagement, CollectionActions
-  include WorkflowValidation, CommonInputOutputNames, KeywordLib, CsvDebugLib
-  C_TYPE = "96 Well Sample Plate"
-  CON_KEY = "Stock Conc (ng/ul)"
+  include Debug
+  include CollectionDisplay
+  include CollectionTransfer
+  include SampleManagement
+  include CollectionActions
+  include WorkflowValidation
+  include CommonInputOutputNames
+  include KeywordLib
+  include CsvDebugLib
 
-  PLATE_ID = "Plate ID"
-  WELL_LOCATION = "Well Location"
+  C_TYPE = '96 Well Sample Plate'
+  CON_KEY = 'Stock Conc (ng/ul)'
+
+  PLATE_ID = 'Plate ID'
+  WELL_LOCATION = 'Well Location'
   ADAPTER_TRANSFER_VOL = 12 #volume of adapter to transfer
   TRANSFER_VOL = 20   #volume of sample to be transfered in ul
   CONC_RANGE = (50...100)
@@ -72,7 +76,7 @@ class Protocol
   # @working_plate collection the plate that has all samples in it
   def rna_prep_steps(working_plate)
     show do
-      title "Run RNA-Prep"
+      title 'Run RNA-Prep'
       note "Run typical RNA-Prep Protocol with plate #{working_plate.id}"
       table highlight_non_empty(working_plate)
     end
@@ -114,22 +118,22 @@ class Protocol
     raise "Not enough adapters for all samples in job" if total_adapters < total_samples #TODO loop back to upload
     if total_adapters > total_samples  #TODO could have it loop back to upload here too
       show do 
-        title "More Adapters than needed"
-        note "The CSV uploaded adds more adapters than needed."
-        note "Click OKAY to continue with this job or Cancel to Cancel"
+        title 'More Adapters than needed'
+        note 'The CSV uploaded adds more adapters than needed.'
+        note 'Click OKAY to continue with this job or Cancel to Cancel'
       end
     end
   end
 
-  #Gets CSV upload and associates each CSV file with the operation in question
+  # Gets CSV upload and associates each CSV file with the operation in question
   #
-  #returns
-  #@CSV CSV a csv file with the desired adapter plate wells
+  # returns
+  # @CSV CSV a csv file with the desired adapter plate wells
   def upload_and_csv
     up_csv = show do
-      title "Make CSV file of Adapters"
+      title 'Make CSV file of Adapters'
       note "Please make a <b>CSV</B> file of all required adapters"
-      note "Row 1 is Reserved for headers"
+      note 'Row 1 is Reserved for headers'
       note "Column 1: '#{PLATE_ID}'"
       note "Column 2: '#{WELL_LOCATION}' (e.g. A1, B1)"
       upload var: CSV_KEY.to_sym
@@ -141,13 +145,10 @@ class Protocol
     end
   end
 
-
-
-
-  #Parses CSV and returns an array of all the samples required
-  #@ CSV  CSV a csv file of thee adapter plate wells
+  # Parses CSV and returns an array of all the samples required
+  # @ CSV  CSV a csv file of thee adapter plate wells
   #
-  #returns hash[key: collection, array[parts]]
+  # returns hash[key: collection, array[parts]]
   def sample_from_csv(csv_uploads)
     parts = []
     csv = CSV.parse(csv_upload) if debug
@@ -164,4 +165,3 @@ class Protocol
     return parts.group_by{|part| part.containing_collection}
   end
 end
-e

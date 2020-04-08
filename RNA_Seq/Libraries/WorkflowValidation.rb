@@ -4,8 +4,8 @@
 # malloc3@uw.edu
 #
 # Module that validates workflow parameters at run time
-needs "Standard Libs/CommonInputOutputNames"
-needs "RNA_Seq/KeywordLib"
+needs 'Standard Libs/CommonInputOutputNames'
+needs 'RNA_Seq/KeywordLib'
 
 module WorkflowValidation
   include CommonInputOutputNames
@@ -30,9 +30,9 @@ module WorkflowValidation
     end
     # Confused about the set up -- each sample will be an op, or one operation
     # will work with multiple samples?
-    # If each sample is an individual, where is the array? Why is the variable "input array". 
-    # Spell out Field Value in variables -- makes it easier if someone wants to look up method in the API 
-    # TODO for myself -- come back to this later 
+    # If each sample is an individual, where is the array? Why is the variable 'input array'.
+    # Spell out Field Value in variables -- makes it easier if someone wants to look up method in the API
+    # TODO for myself -- come back to this later
     a = total_inputs.detect{ |sample| total_inputs.count(sample) > 1 }
     raise "Sample #{a.id} has been included multiple times in this job" if a != nil
     raise 'The number of Input Samples and Output
