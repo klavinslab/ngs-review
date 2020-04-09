@@ -1,3 +1,5 @@
+# frozen_string_literal: true 
+
 # Cannon Mallory
 # UW-BIOFAB
 # 03/04/2019
@@ -82,6 +84,7 @@ class Protocol
               field_value.part.associate(CON_KEY, conc)
             end
           end
+
         end
       end
     end

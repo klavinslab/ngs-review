@@ -1,7 +1,9 @@
-#Cannon Mallory
-#malloc3@uw.edu
+# frozen_string_literal: true
+
+# Cannon Mallory
+# malloc3@uw.edu
 #
-#This is where all the standard keywords/values will live.
+# This is where all the standard keywords/values will live.
 
 module KeywordLib
     MAX_INPUTS = 96
@@ -9,10 +11,9 @@ module KeywordLib
     CON_KEY = "Stock Conc (ng/ul)"
     QC2_KEY = "cDNA QC"
 
-    ADAPTER_PLATE = "Adapter Plate"
-    ADAPTER = "Adapter Item"
+  ADAPTER_PLATE = "Adapter Plate"
+  ADAPTER = "Adapter Item"
 
-    INPUT_PLATE = "Input Plate"
-    INPUT_ITEM = "Input Item"
-
+  INPUT_PLATE = 'Input Plate'
+  INPUT_ITEM = 'Input Item'
 end

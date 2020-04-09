@@ -1,7 +1,9 @@
-#Cannon Mallory
-#UW-BIOFAB
-#03/04/2019
-#malloc3@uw.edux
+# frozen_string_literal: true
+
+# Cannon Mallory
+# UW-BIOFAB
+# 03/04/2019
+# malloc3@uw.edux
 
 needs "Standard Libs/Debug"
 needs "Standard Libs/CommonInputOutputNames"
@@ -35,7 +37,6 @@ class Protocol
   CSV_HEADERS = ["Plate ID", "Well Location"]
   CSV_LOCATION = "Location TBD"
 
-
   def main
 
     validate_inputs(operations, inputs_match_outputs: true)
@@ -64,7 +65,7 @@ class Protocol
   # @param working_plate [collection] the plate that has all samples in it
   def rna_prep_steps(working_plate)
     show do
-      title "Run RNA-Prep"
+      title 'Run RNA-Prep'
       note "Run typical RNA-Prep Protocol with plate #{working_plate.id}"
       table highlight_non_empty(working_plate, check: false)
     end

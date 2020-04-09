@@ -1,11 +1,12 @@
+# frozen_string_literal: true
 #TODO send only failed ops to error and all other ops send to pending??
 
 # Cannon Mallory
 # malloc3@uw.edu
 #
 # Module that validates workflow parameters at run time
-needs "Standard Libs/CommonInputOutputNames"
-needs "RNA_Seq/KeywordLib"
+needs 'Standard Libs/CommonInputOutputNames'
+needs 'RNA_Seq/KeywordLib'
 
 module WorkflowValidation
   include CommonInputOutputNames
@@ -25,9 +26,11 @@ module WorkflowValidation
     total_inputs = []
     total_outputs = []
     operations.each do |op|
-      total_inputs += op.input_array(INPUT_ARRAY).map!{|fv| fv.sample} # x += thing preferred to x = x + thing
-     total_outputs += op.output_array(OUTPUT_ARRAY).map!{|fv| fv.sample}
+      total_inputs += op.input_array(INPUT_ARRAY).map! { |fv| fv.sample }
+      # x += thing preferred to x = x + thing
+      total_outputs += op.output_array(OUTPUT_ARRAY).map! { |fv| fv.sample }
     end
+
     # Confused about the set up -- each sample will be an op, or one operation will work with multiple samples?
     # If each sample is an individual, where is the array? Why is the variable "input array".
     # Spell out Field Value in variables -- makes it easier if someone wants to look up method in the API
@@ -37,10 +40,8 @@ module WorkflowValidation
     raise 'The number of Input Samples and Output
             Samples do not match' if total_inputs.length != total_outputs.length && inputs_match_outputs
     raise 'Too many samples for this job. Please re-lauch job with fewer samples' if total_inputs.length > MAX_INPUTS
-    raise 'There are no samples for this job.'  if total_inputs.length <= 0
+    raise 'There are no samples for this job.' if total_inputs.length <= 0
   end
-
-
 
   #TODO send only failed ops to error and all other ops send to pending
   #
@@ -71,9 +72,6 @@ module WorkflowValidation
             for details."
   end
 
-
-
-
   # validate concentrations of items in the RNA_Prep protocol
   #
   # @params operations [OperationList] list of operations
@@ -82,9 +80,6 @@ module WorkflowValidation
     failed_ops = get_invalid_operations(operations, range)
     show_errored_operations(failed_ops) unless failed_ops.empty?
   end
-
-
-
 
   # Validates the concentration of raw samples and ensures that they are within
   # range
@@ -100,9 +95,6 @@ module WorkflowValidation
     failed_ops
   end
 
-
-
-
   # Validates if all the input concentrations in the input array are within the given range
   #
   # @param op [Operation] operation in question
@@ -116,10 +108,6 @@ module WorkflowValidation
     failed_samples
   end
 
-
-
-
-
   # validates that all items have passed cDNA QC
   #
   # @params operations [OperationList] list of operations
@@ -127,9 +115,6 @@ module WorkflowValidation
     failed_ops = get_failed_cdna_ops(operations)
     show_errored_operations(failed_ops) unless failed_ops.empty?
   end
-
-
-
 
   # Validates the that the cDNA qc step was performed and all inputs passed
   # 
@@ -142,8 +127,6 @@ module WorkflowValidation
     end
     failed_ops
   end
-
-
 
   # validates that all input items have passed cdna qc
   # returns any items that did not pass QC

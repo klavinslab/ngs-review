@@ -1,18 +1,29 @@
-#Cannon Mallory
-#UW-BIOFAB
-#03/04/2019
-#malloc3@uw.edu
+# frozen_string_literal: true
 
-needs "Standard Libs/Debug"
-needs "Standard Libs/CommonInputOutputNames"
-needs "Standard Libs/Units"
+# Cannon Mallory
+# UW-BIOFAB
+# 03/04/2019
+# malloc3@uw.edu
+#
+# This protocol is for total RNA QC.
+# It will take in a batch of samples, replate them
+# together onto a 96 well plate that will then go through a QC protocols including
+# getting the concentrations of the original sample.
+# These concentrations will then be associated
+# with the original sample for use later.
+# Currently build plate needs a bit of work.
+# It works by order of input array and not by order of sample location on plate
 
-needs "Collection_Management/CollectionDisplay"
-needs "Collection_Management/CollectionTransfer"
-needs "Collection_Management/CollectionActions"
-needs "Collection_Management/SampleManagement"
-needs "RNA_Seq/WorkflowValidation"
-needs "RNA_Seq/KeywordLib"
+needs 'Standard Libs/Debug'
+needs 'Standard Libs/CommonInputOutputNames'
+needs 'Standard Libs/Units'
+
+needs 'Collection_Management/CollectionDisplay'
+needs 'Collection_Management/CollectionTransfer'
+needs 'Collection_Management/CollectionActions'
+needs 'Collction_Management/SampleManagement'
+needs 'RNA_Seq/WorkflowValidation'
+needs 'RNA_Seq/KeywordLib'
 
 class Protocol
   include Debug
@@ -24,8 +35,9 @@ class Protocol
   include CommonInputOutputNames
   include KeywordLib
 
-  TRANSFER_VOL = 20   #volume of sample to be transfered in ul
+  C_TYPE = '96 Well Sample Plate'
 
+  TRANSFER_VOL = 20 # volume of sample to be transfered in ul
 
   def main
 
@@ -59,12 +71,12 @@ class Protocol
     store_output_collections(operations, location: 'Freezer')
   end
 
-  #Instructions for performing RNA_PREP
+  # Instructions for performing RNA_PREP
   #
   #@param working_plate [collection] the plate with samples
   def normalization_pooling(working_plate)
     show do
-      title "Do the Normalization Pooling Steps"
+      title 'Do the Normalization Pooling Steps'
       note "Run typical Normalization Pooling protocol with plate #{working_plate.id}"
       table highlight_non_empty(working_plate, check: false)
     end

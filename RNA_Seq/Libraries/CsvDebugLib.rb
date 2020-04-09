@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 module CsvDebugLib
-    CSV_DEBUG = "Plate ID,Well Location
+  CSV_DEBUG = "Plate ID,Well Location
     100,A1
     100,B1
     100,C1

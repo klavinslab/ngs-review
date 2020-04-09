@@ -1,11 +1,14 @@
-#Justin Vrana
+# frozen_string_literal: true
+
+# Justin Vrana
 #
-#modified by:
-#Cannon Mallory
-#malloc3@uw.edu
+# modified by:
+# Cannon Mallory
+# malloc3@uw.edu
 #
-#Modifications include:
+# Modifications include:
 # Optional Checkable boxes.  Additional Documentation
+
 #
 # This module is for displaying information about collections in effecient easy to use ways
 module CollectionDisplay
