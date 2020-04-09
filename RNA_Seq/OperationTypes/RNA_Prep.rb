@@ -5,17 +5,17 @@
 # 03/04/2019
 # malloc3@uw.edux
 
-needs "Standard Libs/Debug"
-needs "Standard Libs/CommonInputOutputNames"
-needs "Standard Libs/Units"
-needs "Standard Libs/UploadHelper"
-needs "Collection_Management/CollectionDisplay"
-needs "Collection_Management/CollectionTransfer"
-needs "Collection_Management/CollectionActions"
-needs "Collection_Management/SampleManagement"
-needs "RNA_Seq/WorkflowValidation"
-needs "RNA_Seq/KeywordLib"
-needs "RNA_Seq/CsvDebugLib"
+needs 'Standard Libs/Debug'
+needs 'Standard Libs/CommonInputOutputNames'
+needs 'Standard Libs/Units'
+needs 'Standard Libs/UploadHelper'
+needs 'Collection_Management/CollectionDisplay'
+needs 'Collection_Management/CollectionTransfer'
+needs 'Collection_Management/CollectionActions'
+needs 'Collection_Management/SampleManagement'
+needs 'RNA_Seq/WorkflowValidation'
+needs 'RNA_Seq/KeywordLib'
+needs 'RNA_Seq/CsvDebugLib'
 
 require 'csv'
 
@@ -31,11 +31,11 @@ class Protocol
   include CollectionActions
   include UploadHelper
 
-  ADAPTER_TRANSFER_VOL = 12 #volume of adapter to transfer
-  TRANSFER_VOL = 20   #volume of sample to be transfered in ul
-  CONC_RANGE = (50...100) #acceptable concentration range
-  CSV_HEADERS = ["Plate ID", "Well Location"]
-  CSV_LOCATION = "Location TBD"
+  ADAPTER_TRANSFER_VOL = 12 # volume of adapter to transfer
+  TRANSFER_VOL = 20 # volume of sample to be transfered in ul
+  CONC_RANGE = (50...100) # acceptable concentration range
+  CSV_HEADERS = ['Plate ID', 'Well Location'].freeze
+  CSV_LOCATION = 'Location TBD'
 
   def main
 
@@ -71,8 +71,7 @@ class Protocol
     end
   end
 
-
-  #Instructions for making an adapter plate
+  # Instructions for making an adapter plate
   #
   # @param num_adapter_needed [int] the number of adapters needed for job
   # @return adapter_plate [collection] plate with all required adapters
@@ -80,8 +79,8 @@ class Protocol
     adapter_plate = make_new_plate(COLLECTION_TYPE)
 
     show do
-      title "Upload CSV"
-      note "On the next page upload CSV of desired Adapters"
+      title 'Upload CSV'
+      note 'On the next page upload CSV of desired Adapters'
     end
 
     up_csv = get_validated_uploads(num_adapters_needed, CSV_HEADERS, false, file_location: CSV_LOCATION)
@@ -116,6 +115,6 @@ class Protocol
         parts.push(part)
       end
     end
-    parts.group_by{|part| part.containing_collection}
+    parts.group_by { |part| part.containing_collection }
   end
 end

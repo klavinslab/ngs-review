@@ -1,5 +1,5 @@
-#This precondition checks that all inputs into the operation have valid concentrations and are ready to be used.
-#Parts are copied from the WorkflowValidation Lib see note below for explination
+# This precondition checks that all inputs into the operation have valid concentrations and are ready to be used.
+# Parts are copied from the WorkflowValidation Lib see note below for explination
 
 def precondition(_op)
     range = (50...100)
@@ -7,11 +7,10 @@ def precondition(_op)
     valid_conc?(_op, range)
 end
 
-
-#Copied from "RNA_Seq/WorkflowValidation"
+# Copied from "RNA_Seq/WorkflowValidation"
 #
-#Struggled to find a viable way to import libraries into Preconditions.  Decided I would come
-#back to this issue later but for now just copy code.
+# Struggled to find a viable way to import libraries into Preconditions.  Decided I would come
+# back to this issue later but for now just copy code.
 #
 # Validates if all the input concentrations in the input array are within the given range
 #

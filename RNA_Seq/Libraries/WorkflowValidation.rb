@@ -1,3 +1,7 @@
+# frozen_string_literal: true
+
+# TODO: send only failed ops to error and all other ops send to pending??
+
 # Cannon Mallory
 # malloc3@uw.edu
 #
@@ -9,23 +13,21 @@ module WorkflowValidation
   include CommonInputOutputNames
   include KeywordLib
 
-  # This is the Yard Doc Style -> More info here: https://rubydoc.info/gems/yard
   # Validates that total inputs (from all operations) are within the acceptable range
   #
   # @raise error if sample id is included twice
   # @raise error if there are more than 96 samples
   # @raise error if the number of inputs does not match the number of outputs
   # @raise error if there are no samples
-  # @param operations [operationlist] list of all operations in the job
-  # @param inputs_match_outputs [boolean] check if number of inputs matches number of outputs
-  def validate_inputs(operations, inputs_match_outputs: false) # Keyword Arguments preferred to defaults
-    operations.first.associate("Pass".to_sym, 'got inside')
+  # @param operations [OperationList] list of all operations in the job
+  # @param inputs_match_outputs [Boolean] check if number of inputs matches number of outputs
+  def validate_inputs(operations, inputs_match_outputs: false)
+    operations.first.associate('Pass'.to_sym, 'got inside')
     total_inputs = []
     total_outputs = []
     operations.each do |op|
-      total_inputs += op.input_array(INPUT_ARRAY).map! { |fv| fv.part }
-      # x += thing preferred to x = x + thing
-      total_outputs += op.output_array(OUTPUT_ARRAY).map! { |fv| fv.part }
+      total_inputs += op.input_array(INPUT_ARRAY).map! { |fv| fv.sample }
+      total_outputs += op.output_array(OUTPUT_ARRAY).map! { |fv| fv.sample }
     end
 
     # Confused about the set up -- each sample will be an op, or one operation will work with multiple samples?
@@ -40,6 +42,18 @@ module WorkflowValidation
     raise 'There are no Items for this job.' if total_inputs.length <= 0
   end
 
+    # Spell out Field Value in variables
+    # TODO: for myself -- come back to this later
+    a = total_inputs.detect{ |sample| total_inputs.count(sample) > 1 }
+    raise "Sample #{a.id} has been included multiple times in this job" if a != nil
+    raise 'The number of Input Samples and Output
+            Samples do not match' if total_inputs.length != total_outputs.length && inputs_match_outputs
+    raise 'Too many samples for this job. Please re-lauch job with fewer samples' if total_inputs.length > MAX_INPUTS
+    raise 'There are no samples for this job.' if total_inputs.length <= 0
+  end
+
+  # TODO: send only failed ops to error and all other ops send to pending
+  #
   # Displays all errored operations and items that failed QC
   # Walks through all validation fails.
   #
@@ -63,7 +77,7 @@ module WorkflowValidation
     end
   end
 
-  # validate concentrations of items in the RNA_Prep protocol
+  # Validates concentrations of items in the RNA_Prep protocol
   #
   # @params operations [OperationList] list of operations
   # @param range [Range] the range that the concentrations must be in ng/ul
@@ -86,7 +100,7 @@ module WorkflowValidation
   # @param operations [OperationList] list of operationlist
   # @param range [Range] acceptable numerical range of concentration
   def get_invalid_operations(operations, range)
-    failed_ops = Hash.new
+    failed_ops = {}
     operations.each do |op|
       failed_samples = get_invalid_concentrations(op, range)
       failed_ops[op] = failed_samples unless failed_samples.empty?
@@ -109,10 +123,10 @@ module WorkflowValidation
 
 
   # Validates the that the cDNA qc step was performed and all inputs passed
-  # 
+  #
   # @param operations [OperationList] operation list used
   def get_failed_cdna_ops(operations)
-    failed_ops = Hash.new
+    failed_ops = {}
     operations.each do |op|
       failed_samples = get_failed_cdna(op, range)
       failed_ops[op] = failed_samples unless failed_samples.empty?
@@ -120,15 +134,15 @@ module WorkflowValidation
     failed_ops
   end
 
-  # validates that all input items have passed cdna qc
+  # Validates that all input items have passed cdna qc
   # returns any items that did not pass QC
-  # 
+  #
   # @param op [Operation] operation in question
   # @return failed_samples [Array] array of failed samples
   def get_failed_cdna(op)
     failed_samples = []
     op.input_array(INPUT_ARRAY).each do |field_value|
-      failed_samples.push(field_value.part) unless field_value.item.get(QC2_KEY) == "Pass"
+      failed_samples.push(field_value.part) unless field_value.item.get(QC2_KEY) == 'Pass'
     end
     failed_samples
   end

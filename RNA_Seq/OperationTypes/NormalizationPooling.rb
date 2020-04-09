@@ -60,7 +60,7 @@ class Protocol
 
     unless multi_plate
       input_plate = operations.first.input_array(INPUT_ARRAY).first.collection
-      relabel_plate(input_plate,working_plate) if !multi_plate
+      relabel_plate(input_plate, working_plate) if !multi_plate
       input_plate.mark_as_deleted
     else
       trash_object(get_array_of_collections(operations, 'input')) if multi_plate
@@ -72,7 +72,7 @@ class Protocol
 
   # Instructions for performing RNA_PREP
   #
-  #@param working_plate [collection] the plate with samples
+  # @param working_plate [collection] the plate with samples
   def normalization_pooling(working_plate)
     show do
       title 'Do the Normalization Pooling Steps'
