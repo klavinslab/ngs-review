@@ -23,9 +23,9 @@ module WorkflowValidation
     total_inputs = []
     total_outputs = []
     operations.each do |op|
-      total_inputs += op.input_array(INPUT_ARRAY).map! { |fv| fv.item }
+      total_inputs += op.input_array(INPUT_ARRAY).map! { |fv| fv.part }
       # x += thing preferred to x = x + thing
-      total_outputs += op.output_array(OUTPUT_ARRAY).map! { |fv| fv.item }
+      total_outputs += op.output_array(OUTPUT_ARRAY).map! { |fv| fv.part }
     end
 
     # Confused about the set up -- each sample will be an op, or one operation will work with multiple samples?
