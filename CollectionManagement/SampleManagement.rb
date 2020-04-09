@@ -12,8 +12,8 @@ module SampleManagement
   # Returns Alpha numerical string eg A1 or if the sample is
   # in multiple locations will return A1, A2, A3
   #
-  # @collection Collection the collection that the sample is in
-  # @sample Sample the Sample that you want the Alpha Numerical location for
+  # @param collection [Collection] the collection containing the sample
+  # @param sample [Sample] the Sample that you want to locate
   def get_alpha_num_location(collection, sample)
     loc_array = get_item_sample_location(collection, sample)
     string = ''
@@ -46,7 +46,7 @@ module SampleManagement
   # @raise TODO add error information
   def add_fv_array_samples_to_collection(input_array, working_plate)
     sample_array = []
-    # collection, finds collection associated with child_item_id 
+    # collection, finds collection associated with child_item_id
     input_array = input_array.sort_by { |fv| [fv.collection.find(fv.sample).first[1],
                                             fv.collection.find(fv.sample).first[0]] }
     input_array.each_with_index do |fv, idx|
