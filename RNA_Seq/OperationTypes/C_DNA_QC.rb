@@ -27,10 +27,7 @@ class Protocol
   include SampleManagement
   include WorkflowValidation
 
-  TRANSFER_VOL = 20   #volume of sample to be transfered in ul
-
-
-  TRANSFER_VOL = 20 #volume of sample to be transfered in ul
+  TRANSFER_VOL = 20 # volume of sample to be transfered in ul
 
   def main
     validate_inputs(operations)
@@ -50,10 +47,10 @@ class Protocol
     trash_object(working_plate)
   end
 
-  # Instruction on taking the QC measurements themselves.
+  # Gives instruction for taking the QC measurements
   # Currently not operational but associates random concentrations for testing
   #
-  #@param working_plate [collection] the plate with samples
+  # @param working_plate [collection] the plate with samples
   def take_qc_measurments(working_plate)
     input_rcx = []
     operations.each do |op|
