@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Cannon Mallory
 # UW-BIOFAB
 # 03/04/2019
@@ -45,7 +47,7 @@ class Protocol
 
     multi_plate = multi_input_plates?(operations)
 
-    working_plate = make_new_plate(C_TYPE, multi_plate)
+    working_plate = make_new_plate(COLLECTION_TYPE, label_plate: multi_plate)
 
     operations.retrieve
 
@@ -54,10 +56,10 @@ class Protocol
       output_fv_array = op.output_array(OUTPUT_ARRAY)
       add_fv_array_samples_to_collection(input_fv_array, working_plate)
       make_output_plate(output_fv_array, working_plate)
-      transfer_from_array_collections(input_fv_array, working_plate, TRANSFER_VOL) if multi_plate
+      transfer_to_collection_from_fv_array(input_fv_array, working_plate, TRANSFER_VOL) if multi_plate
     end
 
-    if !multi_plate
+    unless multi_plate
       input_plate = operations.first.input_array(INPUT_ARRAY).first.collection
       relabel_plate(input_plate,working_plate) if !multi_plate
       input_plate.mark_as_deleted
@@ -66,18 +68,17 @@ class Protocol
     end
 
     normalization_pooling(working_plate)
-
-    store_output_collections(operations, 'Freezer')
+    store_output_collections(operations, location: 'Freezer')
   end
 
   # Instructions for performing RNA_PREP
   #
-  # @param working_plate [Collection] the plate that has all samples in it
+  #@param working_plate [collection] the plate with samples
   def normalization_pooling(working_plate)
     show do
       title 'Do the Normalization Pooling Steps'
       note "Run typical Normalization Pooling protocol with plate #{working_plate.id}"
-      table highlight_non_empty(working_plate)
+      table highlight_non_empty(working_plate, check: false)
     end
   end
 end

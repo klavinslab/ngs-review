@@ -16,29 +16,33 @@ needs 'Collection_Management/CollectionActions'
 needs 'Collection_Management/SampleManagement'
 needs 'RNA_Seq/WorkflowValidation'
 needs 'RNA_Seq/KeywordLib'
+
 class Protocol
-  include Debug
   include CollectionDisplay
   include CollectionTransfer
-  include SampleManagement
   include CollectionActions
-  include WorkflowValidation
   include CommonInputOutputNames
   include KeywordLib
+  include Debug
+  include SampleManagement
+  include WorkflowValidation
+
+  TRANSFER_VOL = 20   #volume of sample to be transfered in ul
+
 
   TRANSFER_VOL = 20 #volume of sample to be transfered in ul
 
   def main
     validate_inputs(operations)
 
-    working_plate = make_new_plate(C_TYPE)
+    working_plate = make_new_plate(COLLECTION_TYPE)
 
     operations.retrieve
 
     operations.each do |op|
       input_fv_array = op.input_array(INPUT_ARRAY)
       add_fv_array_samples_to_collection(input_fv_array, working_plate)
-      transfer_from_array_collections(input_fv_array, working_plate, TRANSFER_VOL)
+      transfer_to_collection_from_fv_array(input_fv_array, working_plate, TRANSFER_VOL)
     end
 
     store_input_collections(operations)
@@ -49,7 +53,7 @@ class Protocol
   # Instruction on taking the QC measurements themselves.
   # Currently not operational but associates random concentrations for testing
   #
-  # TODO complete this and make it actually look at CSV Files
+  #@param working_plate [collection] the plate with samples
   def take_qc_measurments(working_plate)
     input_rcx = []
     operations.each do |op|
@@ -72,7 +76,7 @@ class Protocol
       note 'Please Attach excel files'
       note 'For testing purposes each sample will assume to pass'
       note 'This will eventually come from a CSV file'
-      table highlight_rcx(working_plate, input_rcx)
+      table highlight_collection_rcx(working_plate, input_rcx, check: false)
     end
   end
 end

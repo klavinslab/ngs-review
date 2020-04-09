@@ -5,8 +5,10 @@
 #
 # This module includes helfpul methods for transferring items into and out of collections
 # Currently it only has collection --> collection transfers
-# TODO Item --> collection and collection --> item transfers. (not applicable for current project so not added)
-needs 'Standard Libs/Units'
+
+#TODO Item --> collection and collection --> item transfers. (not applicable for current project so not added)
+needs "Standard Libs/Units"
+
 module CollectionTransfer
 
   include Units
@@ -47,20 +49,22 @@ module CollectionTransfer
 
     associate_plate_to_plate(working_collection, input_collection, "Input Plate", "Input Item")
 
-    show do 
-      title 'Transfer from Stock Plate to Working Plate'
-      note "Please transfer #{transfer_vol} #{MICROLITERS} from stock plate (ID:#{input_collection.id}) to working plate (ID:#{working_collection.id}) per tables below"
-      note 'Separator'
+    show do
+      title "Transfer from Stock Plate to Working Plate"
+      note "Please transfer #{transfer_vol} #{MICROLITERS} from stock plate (ID:#{input_collection.id}) to working
+                                plate (ID:#{working_collection.id}) per tables below"
+      note "Separator"
       note "Stock Plate (ID: #{input_collection.id}):"
-      table highlight_rcx(input_collection, input_rcx)  #TODO need RCX list for transfer here!! not whole collection
+      table highlight_collection_rcx(input_collection, input_rcx, check: false)
       note "Working Plate (ID: #{working_collection}):"
-      table highlight_rcx(working_collection, output_rcx)
+      table highlight_collection_rcx(working_collection, output_rcx, check: false)
     end
   end
 
   # Instructions to transfer from input plates to working_plates when an array of samples in collections is used
   # Will group samples in same collection together for easier transfer.  Uses transfer_to_working_plate method
   #
+
   # @param working_plate [Collection] (Should have samples already associated to it)
   # @param input_fv_array [Array<FieldValues>] an array of field values of collections.  Typically from
   # op.input_array(INPUT_ARRAY_NAME) when the individual inputs are samples in a collection
@@ -92,7 +96,7 @@ module CollectionTransfer
     if get_num_plates(operations, 'input') > 1
       return true
     else
-      return false 
+      return false
     end
   end
 
