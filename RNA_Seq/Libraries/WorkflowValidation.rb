@@ -13,7 +13,8 @@ module WorkflowValidation
   include CommonInputOutputNames
   include KeywordLib
 
-  # Validates that total inputs (from all operations) are within the acceptable range
+  # Validates that total inputs (from all operations)
+  # are within the acceptable range
   #
   # @raise error if sample id is included twice
   # @raise error if there are more than 96 samples
@@ -30,7 +31,8 @@ module WorkflowValidation
       total_outputs += op.output_array(OUTPUT_ARRAY).map! { |fv| fv.sample }
     end
 
-    # Confused about the set up -- each sample will be an op, or one operation will work with multiple samples?
+    # Confused about the set up -- each sample will be an op, 
+    # or one operation will work with multiple samples?
     # If each sample is an individual, where is the array? Why is the variable "input array".
     # Spell out Field Value in variables
     # TODO: for myself -- come back to this later

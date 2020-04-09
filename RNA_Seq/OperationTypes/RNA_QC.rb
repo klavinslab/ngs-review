@@ -41,7 +41,7 @@ class Protocol
     operations.each do |op|
       input_field_value_array = op.input_array(INPUT_ARRAY)
       add_fv_array_samples_to_collection(input_field_value_array, working_plate)
-      transfer_to_collection_from_fv_array(input_field_value_array, working_plate, TRANSFER_VOL)
+      transfer_subsample_to_working_plate(input_field_value_array, working_plate, TRANSFER_VOL)
     end
 
     store_input_collections(operations)
