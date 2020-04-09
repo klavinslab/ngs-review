@@ -42,7 +42,6 @@ class Protocol
   def main
 
     validate_inputs(operations, inputs_match_outputs: true)
-
     validate_cdna_qc(operations)
 
     multi_plate = multi_input_plates?(operations)

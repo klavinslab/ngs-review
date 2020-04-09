@@ -1,6 +1,3 @@
-# frozen_string_literal: true
-# TODO send only failed ops to error and all other ops send to pending??
-
 # Cannon Mallory
 # malloc3@uw.edu
 #
@@ -43,33 +40,27 @@ module WorkflowValidation
     raise 'There are no samples for this job.' if total_inputs.length <= 0
   end
 
-  #TODO send only failed ops to error and all other ops send to pending
-  #
   # Displays all errored operations and items that failed QC
-  # Walks through all validation failes.  Then errors whole job
+  # Walks through all validation fails.
   #
   # @param failed_ops [Hash] Key: Operation ID, Value: Array[Items]
   def show_errored_operations(failed_ops)
     show do 
       title "Some Operations have failed QC"
-      note "#{failed_ops.length} Operations have Items that failed QC"
+      note "<b>#{failed_ops.length}</b> Operations have Items that failed QC"
       note "The next few pages will show which Operations and Items
               are at fault"
-      warning "This job will then be canceled"
     end
+
     failed_ops.each do |op, errored_items|
       show do
         title "Failed Operation and Items"
-        note "Operation #{op.id} from Plan #{op.plan.id}"
+        note "Operation <b>#{op.id}</b> from Plan <b>#{op.plan.id}</b>"
         errored_items.each do |item|
-          note "Item #{item.id}"
+          note "Item <b>#{item.id}</b>"
         end
       end
     end
-
-    #TODO send only failed ops to error and all other ops send to pending
-    raise "Some item in this job failed to pass QC.  Please Reference previous pages
-            for details."
   end
 
   # validate concentrations of items in the RNA_Prep protocol
@@ -78,7 +69,15 @@ module WorkflowValidation
   # @param range [Range] the range that the concentrations must be in ng/ul
   def validate_concentrations(operations, range)
     failed_ops = get_invalid_operations(operations, range)
-    show_errored_operations(failed_ops) unless failed_ops.empty?
+    manage_failed_ops(operations, failed_ops)
+  end
+
+  # validates that all items have passed cDNA QC
+  #
+  # @params operations [OperationList] list of operations
+  def validate_cdna_qc(operations)
+    failed_ops = get_failed_cdna_ops(operations)
+    manage_failed_ops(operations, failed_ops)
   end
 
   # Validates the concentration of raw samples and ensures that they are within
@@ -108,13 +107,6 @@ module WorkflowValidation
     failed_samples
   end
 
-  # validates that all items have passed cDNA QC
-  #
-  # @params operations [OperationList] list of operations
-  def validate_cdna_qc(operations)
-    failed_ops = get_failed_cdna_ops(operations)
-    show_errored_operations(failed_ops) unless failed_ops.empty?
-  end
 
   # Validates the that the cDNA qc step was performed and all inputs passed
   # 
@@ -140,4 +132,164 @@ module WorkflowValidation
     end
     failed_samples
   end
+
+
+  # Manages failed ops.  Coordinates what needs to happen with failed operations
+  #
+  # @param operations [OperationList] lis of operations
+  # @param failed_ops [Hash] list of failed operations (OperationList okay too)
+  def manage_failed_ops(operations, failed_ops)
+    unless failed_ops.empty?
+
+      #must remove all ops from the job that are in the same plan as the failed ops
+      removed_ops = get_removed_ops(operations, failed_ops)
+
+      #get the total number of items that were removed from the job
+      num_items_removed = get_num_items(removed_ops) + get_num_items(failed_ops)
+
+      #get total number of items originally in th job
+      total_items = get_num_items(operations)
+
+      #get the number of items still in the job
+      num_items_left = total_items - num_items_removed
+      
+      if num_items_left == 0
+        cancel_job = true
+      else
+        cancel_job = get_cancel_feedback(total_items, num_items_removed, num_items_left)
+      end
+
+      show_errored_operations(failed_ops)
+
+      if cancel_job
+        raise "This job was canceled because some items did not pass qc and the tech
+                did not want to continue the job"
+      else
+        cancel_ops_and_pause_plans(operations, failed_ops, removed_ops)
+      end
+    end
+  end
+
+
+  # gets feed back from the technition on weather they want to continue with
+  # the job or to cancel and re batch.
+  #
+  # @param total_items [Int] the total number of items in the job
+  # @param num_failed [Int] number of failed items
+  # @param num_left [Int] number of items left in job
+  # @return cancel [Boolean] true if the job should be canceled
+  def get_cancel_feedback(total_items, num_failed, num_left)
+    cancel = nil
+    10.times do 
+      feedback_one = show do 
+        title "Some Items in this Job failed QC"
+        separator
+        warning "Warning"
+        separator
+        note "<b>#{num_failed}</b> out of <b>#{total_items}</b> items were 
+              removed from this job"
+        note "Do you want to continue this job with the remaining <b>#{num_left}</b> items"
+        select ["Yes", "No"], var: "continue".to_sym, label: "Continue?", default: 1
+      end
+
+      if feedback_one[:continue] == "No"
+        feedback_two = show do
+          title "Are You Sure?"
+          note "Are you sure you want to cancel the whole job?"
+          select ["Yes", "No"], var: "cancel".to_sym, label: "Cancel?", default: 1
+        end
+        if feedback_two[:cancel] == "Yes"
+          return true
+        end
+      else
+        return false
+      end
+    end
+    raise "Job Canceled, answer was not consistant.  All Operations errored"
+  end
+
+  # get all the operations that may be in the same plan that should be removed
+  # from the job but should not be canceled or errored.
+  #
+  # @param operations [OperationList] list of operations
+  # @param failed_ops [Hash] hash of key op: value Array[Itmes]
+  # @return removed_ops [Array] list of operationts that should be removed
+  def get_removed_ops(operations, failed_ops)
+    removed_ops = []
+    failed_ops.each do |failed_op, errored_items|
+      plan = failed_op.plan
+      operations.each do |op|
+        unless failed_ops.keys.include?(op) || removed_ops.include?(op) || op.plan != plan
+          removed_ops.push(op)
+        end
+      end
+    end
+    removed_ops
+  end
+
+
+
+  # cancels all failed ops and removes from operations list
+  # sets all like ops in same plans as failed ops to 'delayed'
+  #
+  # @param operations [OperationList] list of operations
+  # @param failed_ops [Hash] list of failed operations
+  # @param removed_ops [Array] list of ops that did not fail but need to be removed from plan
+  def cancel_ops_and_pause_plans(operations, failed_ops, removed_ops)
+    cancel_ops(operations, failed_ops)
+    cancel_ops(operations, removed_ops)
+    pause_like_ops(operations, failed_ops)
+  end
+
+
+  # 'delay' all like ops in plans that contained failed_ops
+  #
+  # @param operations [OperationList] list of operations
+  # @param failed_ops [Hash] list of failed operations
+  def pause_like_ops(operations, failed_ops)
+    failed_ops.keys.each do |failed_op|
+      plan = failed_op.plan
+      like_ops = plan.operations.select{ |op| 
+              op.operation_type.id = failed_op.operation_type.id}
+      like_ops.each do |_op|
+        unless _op == failed_op
+          _op.set_status_recursively('delayed')
+        end
+      end
+    end
+  end
+
+  # cancels all failed ops and removes them from operations list
+  #
+  # @param operations [OperationList] list of operations
+  # @param remove_ops [Array] or [Hash] list of failed operations
+  def cancel_ops(oeprations, remove_ops)
+
+    if remove_ops.is_a?(Hash)
+      remove_ops = remove_ops.keys
+    end
+
+    remove_ops.each do |op|
+      op.set_status_recursively('delayed')
+      operations.delete(op)
+    end
+  end
+
+  # gets the number of input items in the input array of each op in list
+  #
+  # @param ops [Array] Operation List is acceptable of operations
+  # @return nmum_items [Int] the number of input items (Hash is acceptable)
+  def get_num_items(ops)
+
+    if ops.is_a?(Hash)
+      ops = ops.keys
+    end
+
+    num_items = 0
+    ops.each do |op|
+      num_items += op.input_array(INPUT_ARRAY).length
+    end
+    num_items
+  end
+
 end
