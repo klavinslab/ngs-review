@@ -128,8 +128,8 @@ module CollectionActions
 
   # makes a new plate and provides instructions to label said plate
   #
-  # @param c_type [string] the collection type
-  # @param label_plate [boolean] whether to get and label plate or no default true
+  # @param c_type [String] the collection type
+  # @param label_plate [Boolean] whether to get and label plate or no default true
   # @return working_plate [Collection]
   def make_new_plate(c_type, label_plate: true)
     working_plate = Collection.new_collection(c_type)

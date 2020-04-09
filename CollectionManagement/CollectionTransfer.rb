@@ -13,17 +13,19 @@ module CollectionTransfer
 
   include Units
 
-  # Provides instructions to transfer sample from an input_collection to a working_working collection
-  # The array of samples must exist in both collections.  Both collections must already have the samples
+  # Provides instructions to transfer samples
+  # from an input_collection to a working_working collection
+  # The array of samples must exist in both collections.
+  # Both collections must already have the samples
   # associated with it else an error will be thrown.
   #
   # @param input_collection [Collection] the collection that samples will be transfered from
   # @param working_collection [Collection] the collection that samples will be transfered to
   # @param transfer_vol [Integer] volume in ul of sample to transfer
   #
-  # @param arry_samples  [Array<Sample>] Optional an array of all the samples that are to be transfered
+  # @param arry_samples  [Array<Sample>] Optional an array of all the samples to be transfered
   # if black then all samples will be transfered
-  def transfer_to_working_plate(input_collection, working_collection, arry_sample = nil, transfer_vol)
+  def transfer_to_working_plate(input_collection, working_collection, arry_sample: nil, transfer_vol)
     if arry_sample.nil?
       arry_sample = input_collection.parts.map { |part| part.sample if part.class != 'Sample' }
     end
@@ -51,8 +53,7 @@ module CollectionTransfer
 
     show do
       title 'Transfer from Stock Plate to Working Plate'
-      note "Please transfer #{transfer_vol} #{MICROLITERS} from stock plate (ID:#{input_collection.id}) to working
-                                plate (ID:#{working_collection.id}) per tables below"
+      note "Please transfer #{transfer_vol} #{MICROLITERS} from stock plate (ID:#{input_collection.id}) to working plate (ID:#{working_collection.id}) per tables below"
       note 'Separator'
       note "Stock Plate (ID: #{input_collection.id}):"
       table highlight_collection_rcx(input_collection, input_rcx, check: false)
@@ -61,13 +62,12 @@ module CollectionTransfer
     end
   end
 
-  # Instructions to transfer from input plates to working_plates when an array of samples in collections is used
-  # Will group samples in same collection together for easier transfer.  Uses transfer_to_working_plate method
+  # Instructions to transfer physical samples from input plates to working_plates
+  # Groups samples by collection together for easier transfer
+  # Uses transfer_to_working_plate method
   #
-
+  # @param input_fv_array [Array<FieldValues>] an array of field values of collectionsy
   # @param working_plate [Collection] (Should have samples already associated to it)
-  # @param input_fv_array [Array<FieldValues>] an array of field values of collections.  Typically from
-  # op.input_array(INPUT_ARRAY_NAME) when the individual inputs are samples in a collection
   # @param transfer_vol [Integer] volume in ul of sample to transfer
   def transfer_from_array_collections(input_fv_array, working_plate, transfer_vol)
     sample_arry_by_collection = input_fv_array.group_by { |fv| fv.collection }
