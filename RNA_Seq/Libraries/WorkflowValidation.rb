@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-#TODO send only failed ops to error and all other ops send to pending??
+# TODO send only failed ops to error and all other ops send to pending??
 
 # Cannon Mallory
 # malloc3@uw.edu
