@@ -23,21 +23,21 @@ module WorkflowValidation
     total_inputs = []
     total_outputs = []
     operations.each do |op|
-      total_inputs += op.input_array(INPUT_ARRAY).map! { |fv| fv.sample }
+      total_inputs += op.input_array(INPUT_ARRAY).map! { |fv| fv.item }
       # x += thing preferred to x = x + thing
-      total_outputs += op.output_array(OUTPUT_ARRAY).map! { |fv| fv.sample }
+      total_outputs += op.output_array(OUTPUT_ARRAY).map! { |fv| fv.item }
     end
 
     # Confused about the set up -- each sample will be an op, or one operation will work with multiple samples?
     # If each sample is an individual, where is the array? Why is the variable "input array".
     # Spell out Field Value in variables -- makes it easier if someone wants to look up method in the API
     # TODO for myself -- come back to this later
-    a = total_inputs.detect{ |sample| total_inputs.count(sample) > 1}
-    raise "Sample #{a.id} has been included multiple times in this job" if a != nil
-    raise 'The number of Input Samples and Output
-            Samples do not match' if total_inputs.length != total_outputs.length && inputs_match_outputs
-    raise 'Too many samples for this job. Please re-lauch job with fewer samples' if total_inputs.length > MAX_INPUTS
-    raise 'There are no samples for this job.' if total_inputs.length <= 0
+    a = total_inputs.detect{ |item| total_inputs.count(item) > 1}
+    raise "Item #{a.id} has been included multiple times in this job" if a != nil
+    raise 'The number of Input Items and Output
+            Items do not match' if total_inputs.length != total_outputs.length && inputs_match_outputs
+    raise 'Too many Items for this job. Please re-lauch job with fewer Items' if total_inputs.length > MAX_INPUTS
+    raise 'There are no Items for this job.' if total_inputs.length <= 0
   end
 
   # Displays all errored operations and items that failed QC
