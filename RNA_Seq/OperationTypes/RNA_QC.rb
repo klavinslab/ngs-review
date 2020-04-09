@@ -1,4 +1,4 @@
-# frozen_string_literal: true 
+# frozen_string_literal: true
 
 # Cannon Mallory
 # UW-BIOFAB
@@ -8,7 +8,7 @@
 needs 'Standard Libs/Debug'
 needs 'Standard Libs/CommonInputOutputNames'
 needs 'Standard Libs/Units'
-needs "Standard Libs/UploadHelper"
+needs 'Standard Libs/UploadHelper'
 needs 'Collection_Management/CollectionDisplay'
 needs 'Collection_Management/CollectionTransfer'
 needs 'Collection_Management/CollectionActions'
@@ -28,10 +28,9 @@ class Protocol
   include UploadHelper
   include WorkflowValidation
 
-
   TRANSFER_VOL = 20 # volume of sample to be transfered in ul
-  CSV_HEADERS = ["Well Position", "Conc(ng/ul)"]
-  CSV_LOCATION = "TBD Location of file"
+  CSV_HEADERS = ['Well Position', 'Conc(ng/ul)'].freeze # freeze constant
+  CSV_LOCATION = 'TBD Location of file'
 
   def main
     validate_inputs(operations)
@@ -54,10 +53,8 @@ class Protocol
   # Instructions for taking the QC measurements
   # Currently not operational but associates random concentrations for testing
   #
-  # @param working_plate [collection] the plate of samples needing measurements
+  # @param working_plate [Collection] the plate of samples needing measurements
   def take_qc_measurements(working_plate)
-    # change rcx to be clear what is meant here
-    # This is another thing where we name stuff like this all the time, but shouldn't. I'm trying to be the change I want to see.
     show do
       title "Load Plate #{working_plate.id} on Plate Reader"
       note 'Load plate on plate reader and take concentration measurements'
@@ -65,7 +62,7 @@ class Protocol
     end
 
     csv_uploads = get_validated_uploads(working_plate.parts.length,
-        CSV_HEADERS, false, file_location: CSV_LOCATION)
+        CSV_HEADERS: false, file_location: CSV_LOCATION)
 
     upload = csv_uploads.first
     csv = CSV.read(open(upload.url))
@@ -84,16 +81,15 @@ class Protocol
               field_value.part.associate(CON_KEY, conc)
             end
           end
-
         end
       end
     end
   end
 
-  #Lists the measured concentrations.
-  #TODO write highlight heat map method for table
+  # Lists the measured concentrations.
+  # TODO write highlight heat map method for table
   #
-  #@param working_plate [collection] the plate being used
+  # @param working_plate [Collection] the plate being used
   def list_concentrations(working_plate)
     rcx_array = []
     parts = working_plate.parts

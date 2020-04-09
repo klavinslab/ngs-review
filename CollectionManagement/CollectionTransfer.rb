@@ -6,8 +6,8 @@
 # This module includes helfpul methods for transferring items into and out of collections
 # Currently it only has collection --> collection transfers
 
-#TODO Item --> collection and collection --> item transfers. (not applicable for current project so not added)
-needs "Standard Libs/Units"
+# TODO: Item --> collection and collection --> item transfers. (not applicable for current project so not added)
+needs 'Standard Libs/Units'
 
 module CollectionTransfer
 
@@ -47,13 +47,13 @@ module CollectionTransfer
       end
     end
 
-    associate_plate_to_plate(working_collection, input_collection, "Input Plate", "Input Item")
+    associate_plate_to_plate(working_collection, input_collection, 'Input Plate', 'Input Item')
 
     show do
-      title "Transfer from Stock Plate to Working Plate"
+      title 'Transfer from Stock Plate to Working Plate'
       note "Please transfer #{transfer_vol} #{MICROLITERS} from stock plate (ID:#{input_collection.id}) to working
                                 plate (ID:#{working_collection.id}) per tables below"
-      note "Separator"
+      note 'Separator'
       note "Stock Plate (ID: #{input_collection.id}):"
       table highlight_collection_rcx(input_collection, input_rcx, check: false)
       note "Working Plate (ID: #{working_collection}):"
@@ -70,7 +70,7 @@ module CollectionTransfer
   # op.input_array(INPUT_ARRAY_NAME) when the individual inputs are samples in a collection
   # @param transfer_vol [Integer] volume in ul of sample to transfer
   def transfer_from_array_collections(input_fv_array, working_plate, transfer_vol)
-    sample_arry_by_collection = input_fv_array.group_by{ |fv| fv.collection }
+    sample_arry_by_collection = input_fv_array.group_by { |fv| fv.collection }
     sample_arry_by_collection.each do |input_collection, fv_array|
       sample_array = fv_array.map { |fv| fv.sample }
       transfer_to_working_plate(input_collection, working_plate, sample_array, transfer_vol)
@@ -91,7 +91,7 @@ module CollectionTransfer
   # determines if there are multiple output plate
   #
   # @param operations [OperationList] list of operations in job
-  # @returns boolean true if multiple plates 
+  # @returns boolean true if multiple plates
   def multi_input_plates?(operations)
     if get_num_plates(operations, 'input') > 1
       return true
@@ -103,7 +103,7 @@ module CollectionTransfer
   # determines if there are multiple output plates
   #
   # @param operations [OperationList] list of operations in job
-  # @returns boolean true if multiple plates 
+  # @returns boolean true if multiple plates
   def multi_output_plates?(operations)
     if get_num_plates(operations, 'output') > 1
       return true
@@ -137,7 +137,7 @@ module CollectionTransfer
         end
       end
     end
-    return collection_array.uniq
+    collection_array.uniq
   end
 
   # associates all items in the added_plate to the items in the base plate
