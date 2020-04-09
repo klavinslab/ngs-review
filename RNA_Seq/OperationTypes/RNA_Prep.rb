@@ -50,7 +50,7 @@ class Protocol
       output_fv_array = op.output_array(OUTPUT_ARRAY)
       add_fv_array_samples_to_collection(input_fv_array, working_plate)
       make_output_plate(output_fv_array, working_plate)
-      transfer_to_collection_from_fv_array(input_fv_array, working_plate, TRANSFER_VOL)
+      transfer_subsample_to_working_plate(input_fv_array, working_plate, TRANSFER_VOL)
     end
 
     adapter_plate = make_adapter_plate(working_plate.parts.length)
