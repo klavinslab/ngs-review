@@ -42,18 +42,6 @@ module WorkflowValidation
     raise 'There are no Items for this job.' if total_inputs.length <= 0
   end
 
-    # Spell out Field Value in variables
-    # TODO: for myself -- come back to this later
-    a = total_inputs.detect{ |sample| total_inputs.count(sample) > 1 }
-    raise "Sample #{a.id} has been included multiple times in this job" if a != nil
-    raise 'The number of Input Samples and Output
-            Samples do not match' if total_inputs.length != total_outputs.length && inputs_match_outputs
-    raise 'Too many samples for this job. Please re-lauch job with fewer samples' if total_inputs.length > MAX_INPUTS
-    raise 'There are no samples for this job.' if total_inputs.length <= 0
-  end
-
-  # TODO: send only failed ops to error and all other ops send to pending
-  #
   # Displays all errored operations and items that failed QC
   # Walks through all validation fails.
   #
@@ -119,14 +107,6 @@ module WorkflowValidation
       failed_samples.push(field_value.part) unless range.cover?(conc)
     end
     failed_samples
-  end
-
-  # Validates that all items have passed cDNA QC
-  #
-  # @params operations [OperationList] list of operations
-  def validate_cdna_qc(operations)
-    failed_ops = get_failed_cdna_ops(operations)
-    show_errored_operations(failed_ops) unless failed_ops.empty?
   end
 
   # Validates the that the cDNA qc step was performed and all inputs passed
