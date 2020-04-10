@@ -6,8 +6,6 @@
 # Module for working with collections
 # These actions should involve the WHOLE plate not individual wells.
 # NOTE: The collection is doing the whole action
-# Thats what I thought -- but the way this is written in the protocol,
-# each operation seems to deal with one sample, not the whole plate
 module CollectionActions
   # Store all input collections from all operations
   #
@@ -23,7 +21,7 @@ module CollectionActions
     end
   end
 
-  # stores all output collections from all operations
+  # Stores all output collections from all operations
   #
   # @param operations [OperationList] the operation list that all output collections should be stored
   def store_output_collections(operations, location: nil)
@@ -139,11 +137,12 @@ module CollectionActions
 
   # Instructions on getting and labeling new plate
   #
-  # @param plate [Collection] plate to be retrieved and labeled
+  # @param plate [Collection] the plate to be retrieved and labeled
   def get_and_label_new_plate(plate)
     show do
       title 'Get and Label Working Plate'
-      note "Get a <b>#{plate.object_type.name}</b> and label it ID: <b>#{plate.id}</b>"
+      note "Get a <b>#{plate.object_type.name}</b> and 
+           label it ID: <b>#{plate.id}</b>"
     end
   end
 end
