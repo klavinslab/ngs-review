@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# TODO: send only failed ops to error and all other ops send to pending??
-
 # Cannon Mallory
 # malloc3@uw.edu
 #
@@ -123,6 +121,13 @@ module WorkflowValidation
     failed_samples
   end
 
+  # Validates that all items have passed cDNA QC
+  #
+  # @params operations [OperationList] list of operations
+  def validate_cdna_qc(operations)
+    failed_ops = get_failed_cdna_ops(operations)
+    show_errored_operations(failed_ops) unless failed_ops.empty?
+  end
 
   # Validates the that the cDNA qc step was performed and all inputs passed
   #
