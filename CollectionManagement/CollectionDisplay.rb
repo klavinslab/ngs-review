@@ -13,9 +13,9 @@
 # This module is for displaying information about collections in effecient easy to use ways
 module CollectionDisplay
 
-  # Creates a table of the same size and shape of the collection collection
+  # Creates a table with the same dimensions as the input collection
   #
-  # @param collection [collection] the collection of which a table is being made
+  # @param collection [Collection] the collection to be represented by the table
   def create_collection_table(collection)
     size = collection.object_type.rows * collection.object_type.columns
     slots = (1..size).to_a
@@ -34,16 +34,15 @@ module CollectionDisplay
   # @param id [String] what will be printed in the table
   #                    (TODO EMPTY STRING/DONT REPLACE CONTENT)
   # @param check [Boolean] optional determins if cell is checkable or not
-  def highlight(tbl, row, col, id, check: true)
+  def highlight_cell(tbl, row, col, id, check: true)
     tbl[row][col] = { content: id, class: 'td-filled-slot', check: check }
   end
 
   # Highlights all cells in ROW/COLUMN/X  (TODO TABLE CLASS)
-  # Highlights all cells in ROW/COLUMN/X (TODO TABLE CLASS)
   # X can be any string that is to be displayed in cell
   #
   # @param table [table] the table with cells to be highlighted
-  # @param rcx_list [array] array of [[row, colum, x],...]
+  # @param rcx_list [array] array of [[row, column, x],...]
   #     row = int
   #     col = int
   #     x = string
@@ -67,10 +66,10 @@ module CollectionDisplay
   #     col = int
   #     x = string
   #     check = boolean
-  # @return [table]
+  # @return [Table]
   def highlight_rcx_check(table, rcx_check_list)
     rcx_check_list.each do |r, c, x, check|
-      highlight(table, r, c, x, check: check)
+      highlight_cell(table, r, c, x, check: check)
     end
     table
   end
@@ -78,8 +77,8 @@ module CollectionDisplay
   # Highlights all cells in ROW/COLUMN/X (CHANGED NAME)
   # X can be any string that is to be displayed in cell
   #
-  # @param collection [collection] the collection
-  # @param rcx_list [array] array of [[row, colum, x],...]
+  # @param collection [Collection] the collection
+  # @param rcx_list [Array] array of [[row, colum, x],...]
   #     row = int
   #     col = int
   #     x = string
@@ -200,7 +199,7 @@ module CollectionDisplay
   def highlight_alpha_rcx(collection, rcx_list, check: true)
     tbl = create_alpha_numeric_table(collection)
     rcx_list.each do |r, c, x|
-      highlight(tbl, r, c, x, check: check)
+      highlight_cell(tbl, r, c, x, check: check)
     end
     tbl
   end

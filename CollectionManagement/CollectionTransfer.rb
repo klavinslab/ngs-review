@@ -20,7 +20,7 @@ module CollectionTransfer
   # @param transfer_vol [Integer] volume in ul of sample to transfer
   #
   # @param arry_samples  [Array<Sample>] Optional an array of all the samples to be transfered
-  # if black then all samples will be transfered
+  # if blank then all samples will be transfered
   def transfer_to_working_plate(input_collection, working_collection, arry_sample: nil, transfer_vol)
     if arry_sample.nil?
       arry_sample = input_collection.parts.map { |part| part.sample if part.class != 'Sample' }
@@ -28,14 +28,15 @@ module CollectionTransfer
     input_rcx = []
     output_rcx = []
     arry_sample.each do |sample|
-      input_location_array = get_item_sample_location(input_collection, sample)
-      input_sample_location = get_alpha_num_location(input_collection, sample)
-
+      input_location_array = get_item_sample_location(input_collection, sample) # 2d array
+      # [[0, 0], [1, 1]]
+      input_sample_location = get_alpha_num_location(input_collection, sample) # String
+       # "A1, B2"
       output_location_array = get_item_sample_location(working_collection, sample)
       output_sample_location = get_alpha_num_location(input_collection, sample)
 
       input_location_array.each do |sub_array|
-        sub_array.push(input_sample_location)
+        sub_array.push(input_sample_location) # [0,0,A1]
         input_rcx.push(sub_array)
       end
 
@@ -139,15 +140,17 @@ module CollectionTransfer
   # associates all items in the added_plate to the items in the base plate
   # Associates corrosponding well locations.  Assocaites plate to plate and well to well
   # Only associates to wells that have a part in them
-  #
+  # associate(key, value, upload = nil, options = { duplicates: false }) ⇒ Object#
   # @param base_plate [Collection] the plate that is getting the association
   # @param added_plate [Collection] the plate that is transfering the association
+  # @param plate_key [String] "input plate"
+  # @param item_key [String] "input item"
   def associate_plate_to_plate(base_plate, added_plate, plate_key, item_key)
-    base_plate.associate(plate_key, added_plate)
-    added_parts = added_plate.parts
-    base_parts = base_plate.parts
+    base_plate.associate(plate_key, added_plate) # {"input_plate" => added_plate}
+    added_parts = added_plate.parts # items in added plate
+    base_parts = base_plate.parts # items in base plate
     base_parts.each_with_index do |part, idx|
-      part.associate(item_key, added_parts[idx])
+      part.associate(item_key, added_parts[idx]) # {"input item" => }
     end
   end
 end
