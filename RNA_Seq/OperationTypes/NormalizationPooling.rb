@@ -53,9 +53,9 @@ class Protocol
     operations.each do |op|
       input_fv_array = op.input_array(INPUT_ARRAY)
       output_fv_array = op.output_array(OUTPUT_ARRAY)
-      add_fv_array_samples_to_collection(input_fv_array, working_plate)
+      add_samples_to_collection(input_fv_array, working_plate)
       make_output_plate(output_fv_array, working_plate)
-      transfer_subsample_to_working_plate(input_fv_array, working_plate, TRANSFER_VOL) if multi_plate
+      transfer_subsamples_to_working_plate(input_fv_array, working_plate, TRANSFER_VOL) if multi_plate
     end
 
     unless multi_plate

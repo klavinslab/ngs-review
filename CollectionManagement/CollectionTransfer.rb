@@ -14,10 +14,6 @@ module CollectionTransfer
   include Units
 
   # Provides instructions to transfer samples
-  # from an input_collection to a working_working collection
-  # The array of samples must exist in both collections.
-  # Both collections must already have the samples
-  # associated with it else an error will be thrown.
   #
   # @param input_collection [Collection] the collection that samples will be transfered from
   # @param working_collection [Collection] the collection that samples will be transfered to
