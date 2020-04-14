@@ -1,7 +1,5 @@
-# frozen_string_literal: true
-
-# Cannon Mallory
-# malloc3@uw.edu
+#Cannon Mallory
+#malloc3@uw.edu
 #
 # Methods for transferring items into and out of collections
 # Currently it only has collection --> collection transfers
@@ -42,20 +40,21 @@ module CollectionTransfer
       end
 
       output_location_array.each do |sub_array|
-        sub_array.push(output_sample_location)
-        output_rcx.push(sub_array)
+          sub_array.push(output_sample_location)
+          output_rcx.push(sub_array)
       end
     end
 
     associate_plate_to_plate(working_collection, input_collection, 'Input Plate', 'Input Item')
 
     show do
-      title 'Transfer from Stock Plate to Working Plate'
-      note "Please transfer #{transfer_vol} #{MICROLITERS} from stock plate (ID:#{input_collection.id}) to working plate (ID:#{working_collection.id}) per tables below"
-      note 'Separator'
-      note "Stock Plate (ID: #{input_collection.id}):"
+      title "Transfer from Stock Plate to Working Plate"
+      note "Please transfer <b>#{transfer_vol} #{MICROLITERS}</b> from stock plate (<b>ID:#{input_collection.id}</b>) to working
+                                plate (<b>ID:#{working_collection.id}</b>) per tables below"
+      note "Separator"
+      note "Stock Plate (ID: <b>#{input_collection.id}</b>):"
       table highlight_collection_rcx(input_collection, input_rcx, check: false)
-      note "Working Plate (ID: #{working_collection}):"
+      note "Working Plate (ID: <b>#{working_collection}</b>):"
       table highlight_collection_rcx(working_collection, output_rcx, check: false)
     end
   end
@@ -76,18 +75,20 @@ module CollectionTransfer
     end
   end
 
-  # Instructions on relabeling plates to new plate ID
+
+  #Instructions on relabeling plates to new plate ID
   #
-  # @param plate1 [Collection] plate to be relabel
-  # @param plate2 [Collection] new plate label
+  #@plate1 Collection plate to be relabel
+  #@plate2 Collection new plate label
   def relabel_plate(plate1, plate2)
     show do
-      title 'Rename Plate'
-      note "Relabel plate #{plate1.id} with #{plate2.id}"
+      title "Rename Plate"
+      note "Relabel plate <b>#{plate1.id}</b> with <b>#{plate2.id}</b>"
     end
   end
 
-  # determines if there are multiple output plate
+
+  #determines if there are multiple input plates
   #
   # @param operations [OperationList] list of operations in job
   # @returns boolean true if multiple plates
@@ -99,7 +100,7 @@ module CollectionTransfer
     end
   end
 
-  # determines if there are multiple output plates
+  #determines if there are multiple output plates
   #
   # @param operations [OperationList] list of operations in job
   # @returns boolean true if multiple plates
@@ -111,25 +112,25 @@ module CollectionTransfer
     end
   end
 
-  # gets the number of plate
+  #gets the number of plate
   #
-  # @param operations [OperationList] list of operations in job
-  # @param in_out [String] input or output determines if its input or output collections
-  # @returns [Int] the number of plates 
+  #@operations OperationList list of operations in job
+  #@in_out String input or output determines if its input or output collections
+  #returns Int the number of plates
   def get_num_plates(operations, in_out)
     return get_array_of_collections(operations, in_out).length
   end
 
-  # gets the number of plate
+  #gets the number of plate
   #
-  # @param operations [OperationList] list of operations in job
-  # @param in_out [String] input or output determines if its input or output collections
-  # @returns Array[collection] the number of plates
+  #@operations OperationList list of operations in job
+  #@in_out String input or output determines if its input or output collections
+  #returns Array[collection] the number of plates
   def get_array_of_collections(operations, in_out)
     collection_array = []
     operations.each do |op|
-      obj_array = op.inputs if in_out = 'input'
-      obj_array = op.outputs if in_out = 'output'
+      obj_array = op.inputs if in_out = "input"
+      obj_array = op.outputs if in_out = "output"
       obj_array.each do |fv|
         if fv.collection != nil
           collection_array.push(fv.collection)
@@ -139,7 +140,8 @@ module CollectionTransfer
     collection_array.uniq
   end
 
-  # associates all items in the added_plate to the items in the base plate
+
+  #associates all items in the added_plate to the items in the base plate
   # Associates corrosponding well locations.  Assocaites plate to plate and well to well
   # Only associates to wells that have a part in them
   # associate(key, value, upload = nil, options = { duplicates: false }) ⇒ Object#

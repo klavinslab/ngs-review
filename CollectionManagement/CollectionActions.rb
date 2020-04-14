@@ -14,36 +14,47 @@ module CollectionActions
   def store_input_collections(operations, location: nil)
     show do
       title 'Put Away the Following Items'
-      operations.each do |op|
-        array_of_input_fv = op.inputs.reject { |fv| fv.collection.nil? }
-        table table_of_object_locations(array_of_input_fv, location: location)
-      end
+      table table_of_job_object_location(operations, input_output: 'input',
+              location: location)
     end
   end
 
   # Stores all output collections from all operations
   #
-  # @param operations [OperationList] the operation list that all
+  # @param operations [OperationList] the operation list where all
   # output collections should be stored
   def store_output_collections(operations, location: nil)
     show do
       title 'Put Away the Following Items'
-      array_of_input_fv = []
-      operations.each do |op|
-        array_of_input_fv += op.outputs.reject { |fv| fv.collection.nil? }
-      end
-      table table_of_object_locations(array_of_input_fv, location: location)
+      table table_of_job_object_location(operations, input_output: 'output',
+              location: location)
     end
   end
 
-  # Shows the locations of all the collections in the array of FV.
-  # Can move the location to optional "location"
+
+  #Stores all input objects in operation list
   #
-  # @raise [error] if
-  # @param array_of_fv [Array<FieldValues>] an array of FieldValues
-  # @param location [string] Optional moves all collections to that location
-  # @return [Table] Description of Table
-  def table_of_object_locations(array_of_fv, location: nil)
+  # @param operations [OperationList] operation list
+  # @location [String] the location that things are to be put
+  def table_of_job_object_location(operations, input_output: "input", location: nil)
+    obj_array = []
+    operations.each do |op|
+      array_of_fv = op.inputs.reject { |fv| 
+              fv.collection.nil? } if input_output == 'input'
+      array_of_fv = op.outputs.reject { |fv| 
+              fv.collection.nil? } if input_output == 'output'
+      obj_array.concat(get_obj_from_fv_array(array_of_fv))
+    end
+    obj_array = obj_array.uniq
+    set_locations(obj_array, location) unless location.nil?
+    get_collection_locations(obj_array)
+  end
+
+  # Get the obj  from the fv (either item or collection)
+  #
+  # @param array_of_fv [Array] array of field values
+  # @return obj_array [Array] array of objects (eiter collections or items)
+  def get_obj_from_fv_array(array_of_fv)
     obj_array = []
     array_of_fv.each do |fv|
       if !fv.collection.nil?
@@ -54,9 +65,7 @@ module CollectionActions
         raise "Invalid class.  Neither collection nor item. Class = #{fv.class}"
       end
     end
-    obj_array = obj_array.uniq
-    set_locations(obj_array, location) unless location.nil?
-    get_collection_locations(obj_array)
+    obj_array.uniq
   end
 
   # Sets the location of all objects in array to some given locations

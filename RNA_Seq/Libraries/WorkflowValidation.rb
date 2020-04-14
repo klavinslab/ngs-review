@@ -115,7 +115,7 @@ module WorkflowValidation
   def get_failed_cdna_ops(operations)
     failed_ops = {}
     operations.each do |op|
-      failed_samples = get_failed_cdna(op, range)
+      failed_samples = get_failed_cdna(op)
       failed_ops[op] = failed_samples unless failed_samples.empty?
     end
     failed_ops
@@ -251,7 +251,7 @@ module WorkflowValidation
     failed_ops.keys.each do |failed_op|
       plan = failed_op.plan
       like_ops = plan.operations.select{ |op| 
-              op.operation_type.id = failed_op.operation_type.id}
+              op.operation_type.id == failed_op.operation_type.id}
       like_ops.each do |_op|
         unless _op == failed_op
           _op.set_status_recursively('delayed')
