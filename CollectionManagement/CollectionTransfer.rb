@@ -67,7 +67,8 @@ module CollectionTransfer
   # @param input_fv_array [Array<FieldValues>] an array of field values of collectionsy
   # @param working_plate [Collection] (Should have samples already associated to it)
   # @param transfer_vol [Integer] volume in ul of sample to transfer
-  def transfer_from_array_collections(input_fv_array, working_plate, transfer_vol)
+  def transfer_from_array_collections(input_fv_array, working_plate, transfer_vol) 
+    # was transfer_to_collection_from_fv_array
     sample_array_by_collection = input_fv_array.group_by { |fv| fv.collection }
     sample_array_by_collection.each do |input_collection, fv_array|
       sample_array = fv_array.map { |fv| fv.sample }
