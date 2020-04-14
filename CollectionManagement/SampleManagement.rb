@@ -37,6 +37,7 @@ module SampleManagement
   # @param working_plate [Collection]
   # @raise TODO add error information
   def add_samples_to_collection(samples, working_plate)
+    # renamed from add_fv_array_samples_to_collection
     samples_to_add = []
     # collection, finds collection associated with child_item_id
     samples = samples.sort_by { |fv| [fv.collection.find(fv.sample).first[1], fv.collection.find(fv.sample).first[0]] }
