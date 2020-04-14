@@ -3,10 +3,11 @@
 # Cannon Mallory
 # malloc3@uw.edu
 #
-# This module includes helfpul methods for transferring items into and out of collections
+# Methods for transferring items into and out of collections
 # Currently it only has collection --> collection transfers
 
-# TODO: Item --> collection and collection --> item transfers. (not applicable for current project so not added)
+# TODO: Item --> collection and collection --> item transfers.
+# (not applicable for current project so not added)
 needs 'Standard Libs/Units'
 
 module CollectionTransfer
@@ -15,23 +16,23 @@ module CollectionTransfer
 
   # Provides instructions to transfer samples
   #
-  # @param input_collection [Collection] the collection that samples will be transfered from
-  # @param working_collection [Collection] the collection that samples will be transfered to
+  # @param input_collection [Collection] the collection samples will be transfered from
+  # @param working_collection [Collection] the collection samples will be transfered to
   # @param transfer_vol [Integer] volume in ul of sample to transfer
   #
-  # @param arry_samples  [Array<Sample>] Optional an array of all the samples to be transfered
+  # @param array_of_samples  [Array<Sample>] Optional an array of all samples to be transfered
   # if blank then all samples will be transfered
-  def transfer_to_working_plate(input_collection, working_collection, arry_sample: nil, transfer_vol)
-    if arry_sample.nil?
-      arry_sample = input_collection.parts.map { |part| part.sample if part.class != 'Sample' }
+  def transfer_to_working_plate(input_collection, working_collection, transfer_vol, array_of_samples: nil)
+    if array_of_samples.nil?
+      array_of_samples = input_collection.parts.map { |part| part.sample if part.class != 'Sample' }
     end
     input_rcx = []
     output_rcx = []
-    arry_sample.each do |sample|
+    array_of_samples.each do |sample|
       input_location_array = get_item_sample_location(input_collection, sample) # 2d array
       # [[0, 0], [1, 1]]
       input_sample_location = get_alpha_num_location(input_collection, sample) # String
-       # "A1, B2"
+      # "A1, B2"
       output_location_array = get_item_sample_location(working_collection, sample)
       output_sample_location = get_alpha_num_location(input_collection, sample)
 
@@ -67,8 +68,8 @@ module CollectionTransfer
   # @param working_plate [Collection] (Should have samples already associated to it)
   # @param transfer_vol [Integer] volume in ul of sample to transfer
   def transfer_from_array_collections(input_fv_array, working_plate, transfer_vol)
-    sample_arry_by_collection = input_fv_array.group_by { |fv| fv.collection }
-    sample_arry_by_collection.each do |input_collection, fv_array|
+    sample_array_by_collection = input_fv_array.group_by { |fv| fv.collection }
+    sample_array_by_collection.each do |input_collection, fv_array|
       sample_array = fv_array.map { |fv| fv.sample }
       transfer_to_working_plate(input_collection, working_plate, sample_array, transfer_vol)
     end

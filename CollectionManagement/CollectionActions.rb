@@ -23,7 +23,8 @@ module CollectionActions
 
   # Stores all output collections from all operations
   #
-  # @param operations [OperationList] the operation list that all output collections should be stored
+  # @param operations [OperationList] the operation list that all
+  # output collections should be stored
   def store_output_collections(operations, location: nil)
     show do
       title 'Put Away the Following Items'
@@ -60,8 +61,10 @@ module CollectionActions
 
   # Sets the location of all objects in array to some given locations
   #
-  # @param obj_array  Array[Collection] or Array[Items] an array of any objects that extend class item
-  # @param location [String] the location to be moved to (just string or Wizard if Wizard Exist)
+  # @param obj_array  Array[Collection] or Array[Items] an array of any objects
+  # that extends class Item
+  # @param location [String] the location to move object to
+  # (String or Wizard if Wizard exists)
   def set_locations(obj_array, location)
     obj_array.each do |obj|
       obj.move(location)
@@ -104,9 +107,7 @@ module CollectionActions
   # @param hazardous [boolean] if hazardous then true
   def trash_object(obj_array, hazardous: true)
     # toss QC plate
-    if obj_array.class != Array
-      obj_array = [obj_array]
-    end
+    obj_array = [obj_array] if obj_array.class != Array
 
     show do
       title 'Trash the following items'
@@ -141,7 +142,7 @@ module CollectionActions
   def get_and_label_new_plate(plate)
     show do
       title 'Get and Label Working Plate'
-      note "Get a <b>#{plate.object_type.name}</b> and 
+      note "Get a <b>#{plate.object_type.name}</b> and
            label it ID: <b>#{plate.id}</b>"
     end
   end

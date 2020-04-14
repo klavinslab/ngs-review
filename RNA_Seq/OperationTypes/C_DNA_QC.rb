@@ -56,10 +56,10 @@ class Protocol
     operations.each do |op|
       input_array = op.input_array(INPUT_ARRAY)
       input_items = input_array.map { |fv| fv.item }
-      arry_sample = input_array.map { |fv| fv.sample }
+      array_of_samples = input_array.map { |fv| fv.sample }
       input_items.each_with_index do |item, idx|
         item.associate(QC2_KEY, 'Pass')
-        sample = arry_sample[idx]
+        sample = array_of_samples[idx]
         working_plate_loc_array = working_plate.find(sample)
         working_plate_loc_array.each do |sub_array|
           sub_array.push("#{item.get(QC2_KEY)}")

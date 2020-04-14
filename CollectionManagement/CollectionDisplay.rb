@@ -10,7 +10,7 @@
 # Optional Checkable boxes.  Additional Documentation
 
 #
-# This module is for displaying information about collections in effecient easy to use ways
+# Methods for displaying information about collections
 module CollectionDisplay
 
   # Creates a table with the same dimensions as the input collection

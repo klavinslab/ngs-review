@@ -33,18 +33,18 @@ module SampleManagement
 
   # Assigns samples to specific well locations
   #
-  # @param input_array [Array<FieldValue>]
+  # @param samples [Array<FieldValue>]
   # @param working_plate [Collection]
   # @raise TODO add error information
-  def add_samples_to_collection(input_array, working_plate)
-    sample_array = []
+  def add_samples_to_collection(samples, working_plate)
+    samples_to_add = []
     # collection, finds collection associated with child_item_id
-    input_array = input_array.sort_by { |fv| [fv.collection.find(fv.sample).first[1], fv.collection.find(fv.sample).first[0]] }
-    input_array.each { |fv| sample_array << fv.sample }
+    samples = samples.sort_by { |fv| [fv.collection.find(fv.sample).first[1], fv.collection.find(fv.sample).first[0]] }
+    samples.each { |fv| samples_to_add << fv.sample }
     slots_left = working_plate.get_empty.length
-    raise 'There are too many samples in this batch.' if sample_array.length > slots_left
+    raise 'There are too many samples in this batch.' if samples_to_add.length > slots_left
 
-    working_plate.add_samples(sample_array)
+    working_plate.add_samples(samples_to_add)
     # TODO: add error checking for if the working_plate is full
   end
 

@@ -62,7 +62,7 @@ class Protocol
 
   # Instructions for performing RNA_PREP
   #
-  # @param working_plate [collection] the plate that has all samples in it
+  # @param working_plate [Collection] the plate that has all samples in it
   def rna_prep_steps(working_plate)
     show do
       title 'Run RNA-Prep'
@@ -88,7 +88,7 @@ class Protocol
     col_parts_hash.each do |collection_item, parts|
       collection = Collection.find(collection_item.id)
       adapter_plate.add_samples(parts)
-      transfer_to_working_plate(collection, adapter_plate, arry_sample = parts, ADAPTER_TRANSFER_VOL)
+      transfer_to_working_plate(collection, adapter_plate, array_of_samples = parts, ADAPTER_TRANSFER_VOL)
     end
     adapter_plate
   end
