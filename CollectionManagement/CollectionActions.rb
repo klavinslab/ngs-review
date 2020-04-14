@@ -6,8 +6,6 @@
 # Module for working with collections
 # These actions should involve the WHOLE plate not individual wells.
 # NOTE: The collection is doing the whole action
-# Thats what I thought -- but the way this is written in the protocol,
-# each operation seems to deal with one sample, not the whole plate
 module CollectionActions
   # Store all input collections from all operations
   #
@@ -21,10 +19,10 @@ module CollectionActions
     end
   end
 
-  # stores all output collections from all operations
+  # Stores all output collections from all operations
   #
-  # @param operations [OperationList] the operation list that all output collections should be stored
-  # @param location [String] optional location string
+  # @param operations [OperationList] the operation list where all
+  # output collections should be stored
   def store_output_collections(operations, location: nil)
     show do
       title 'Put Away the Following Items'
@@ -72,8 +70,10 @@ module CollectionActions
 
   # Sets the location of all objects in array to some given locations
   #
-  # @param obj_array  Array[Collection] or Array[Items] an array of any objects that extend class item
-  # @param location [String] the location to be moved to (just string or Wizard if Wizard Exist)
+  # @param obj_array  Array[Collection] or Array[Items] an array of any objects
+  # that extends class Item
+  # @param location [String] the location to move object to
+  # (String or Wizard if Wizard exists)
   def set_locations(obj_array, location)
     obj_array.each do |obj|
       obj.move(location)
@@ -116,9 +116,7 @@ module CollectionActions
   # @param hazardous [boolean] if hazardous then true
   def trash_object(obj_array, hazardous: true)
     # toss QC plate
-    if obj_array.class != Array
-      obj_array = [obj_array]
-    end
+    obj_array = [obj_array] if obj_array.class != Array
 
     show do
       title 'Trash the following items'
@@ -138,8 +136,8 @@ module CollectionActions
 
   # makes a new plate and provides instructions to label said plate
   #
-  # @param c_type [string] the collection type
-  # @param label_plate [boolean] whether to get and label plate or no default true
+  # @param c_type [String] the collection type
+  # @param label_plate [Boolean] whether to get and label plate or no default true
   # @return working_plate [Collection]
   def make_new_plate(c_type, label_plate: true)
     working_plate = Collection.new_collection(c_type)
@@ -149,11 +147,12 @@ module CollectionActions
 
   # Instructions on getting and labeling new plate
   #
-  # @param plate [Collection] plate to be retrieved and labeled
+  # @param plate [Collection] the plate to be retrieved and labeled
   def get_and_label_new_plate(plate)
     show do
       title 'Get and Label Working Plate'
-      note "Get a <b>#{plate.object_type.name}</b> and label it ID: <b>#{plate.id}</b>"
+      note "Get a <b>#{plate.object_type.name}</b> and
+           label it ID: <b>#{plate.id}</b>"
     end
   end
 end

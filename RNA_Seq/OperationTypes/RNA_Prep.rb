@@ -5,17 +5,17 @@
 # 03/04/2019
 # malloc3@uw.edux
 
-needs "Standard Libs/Debug"
-needs "Standard Libs/CommonInputOutputNames"
-needs "Standard Libs/Units"
-needs "Standard Libs/UploadHelper"
-needs "Collection_Management/CollectionDisplay"
-needs "Collection_Management/CollectionTransfer"
-needs "Collection_Management/CollectionActions"
-needs "Collection_Management/SampleManagement"
-needs "RNA_Seq/WorkflowValidation"
-needs "RNA_Seq/KeywordLib"
-needs "RNA_Seq/CsvDebugLib"
+needs 'Standard Libs/Debug'
+needs 'Standard Libs/CommonInputOutputNames'
+needs 'Standard Libs/Units'
+needs 'Standard Libs/UploadHelper'
+needs 'Collection_Management/CollectionDisplay'
+needs 'Collection_Management/CollectionTransfer'
+needs 'Collection_Management/CollectionActions'
+needs 'Collection_Management/SampleManagement'
+needs 'RNA_Seq/WorkflowValidation'
+needs 'RNA_Seq/KeywordLib'
+needs 'RNA_Seq/CsvDebugLib'
 
 require 'csv'
 
@@ -31,11 +31,11 @@ class Protocol
   include CollectionActions
   include UploadHelper
 
-  ADAPTER_TRANSFER_VOL = 12 #volume of adapter to transfer
-  TRANSFER_VOL = 20   #volume of sample to be transfered in ul
-  CONC_RANGE = (50...100) #acceptable concentration range
-  CSV_HEADERS = ["Plate ID", "Well Location"]
-  CSV_LOCATION = "Location TBD"
+  ADAPTER_TRANSFER_VOL = 12 # volume of adapter to transfer
+  TRANSFER_VOL = 20 # volume of sample to be transfered in ul
+  CONC_RANGE = (50...100) # acceptable concentration range
+  CSV_HEADERS = ['Plate ID', 'Well Location'].freeze
+  CSV_LOCATION = 'Location TBD'
 
   def main
 
@@ -48,9 +48,9 @@ class Protocol
     operations.each do |op|
       input_fv_array = op.input_array(INPUT_ARRAY)
       output_fv_array = op.output_array(OUTPUT_ARRAY)
-      add_fv_array_samples_to_collection(input_fv_array, working_plate)
+      add_samples_to_collection(input_fv_array, working_plate)
       make_output_plate(output_fv_array, working_plate)
-      transfer_to_collection_from_fv_array(input_fv_array, working_plate, TRANSFER_VOL)
+      transfer_subsamples_to_working_plate(input_fv_array, working_plate, TRANSFER_VOL)
     end
 
     adapter_plate = make_adapter_plate(working_plate.parts.length)
@@ -62,7 +62,7 @@ class Protocol
 
   # Instructions for performing RNA_PREP
   #
-  # @param working_plate [collection] the plate that has all samples in it
+  # @param working_plate [Collection] the plate that has all samples in it
   def rna_prep_steps(working_plate)
     show do
       title 'Run RNA-Prep'
@@ -71,8 +71,7 @@ class Protocol
     end
   end
 
-
-  #Instructions for making an adapter plate
+  # Instructions for making an adapter plate
   #
   # @param num_adapter_needed [int] the number of adapters needed for job
   # @return adapter_plate [collection] plate with all required adapters
@@ -80,8 +79,8 @@ class Protocol
     adapter_plate = make_new_plate(COLLECTION_TYPE)
 
     show do
-      title "Upload CSV"
-      note "On the next page upload CSV of desired Adapters"
+      title 'Upload CSV'
+      note 'On the next page upload CSV of desired Adapters'
     end
 
     up_csv = get_validated_uploads(num_adapters_needed, CSV_HEADERS, false, file_location: CSV_LOCATION)
@@ -89,7 +88,7 @@ class Protocol
     col_parts_hash.each do |collection_item, parts|
       collection = Collection.find(collection_item.id)
       adapter_plate.add_samples(parts)
-      transfer_to_working_plate(collection, adapter_plate, arry_sample = parts, ADAPTER_TRANSFER_VOL)
+      transfer_to_working_plate(collection, adapter_plate, array_of_samples = parts, ADAPTER_TRANSFER_VOL)
     end
     adapter_plate
   end
@@ -116,6 +115,6 @@ class Protocol
         parts.push(part)
       end
     end
-    parts.group_by{|part| part.containing_collection}
+    parts.group_by { |part| part.containing_collection }
   end
 end

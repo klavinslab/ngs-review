@@ -1,41 +1,41 @@
 #Cannon Mallory
 #malloc3@uw.edu
 #
-# This module includes helfpul methods for transferring items into and out of collections
+# Methods for transferring items into and out of collections
 # Currently it only has collection --> collection transfers
-#TODO Item --> collection and collection --> item transfers. (not applicable for current project so not added)
-needs "Standard Libs/Units"
+
+# TODO: Item --> collection and collection --> item transfers.
+# (not applicable for current project so not added)
+needs 'Standard Libs/Units'
 
 module CollectionTransfer
 
   include Units
 
-
-  #Provides instructions to transfer sample from an input_collection to a working_working collection
-  #The array of samples must exist in both collections.  Both collections must already have the samples
-  #associated with it else an error will be thrown.
+  # Provides instructions to transfer samples
   #
-  # @input_collection Collection  the collection that samples will be transfered from
-  # @working_collection Collection the collection that samples will be transfered to
-  # @transfer_vol Int volume in ul of sample to transfer
+  # @param input_collection [Collection] the collection samples will be transfered from
+  # @param working_collection [Collection] the collection samples will be transfered to
+  # @param transfer_vol [Integer] volume in ul of sample to transfer
   #
-  # @arry_samples  Array[Sample] Optional an array of all the samples that are to be transfered
-        #if black then all samples will be transfered
-  def transfer_to_working_plate(input_collection, working_collection, arry_sample = nil, transfer_vol)
-    if arry_sample == nil
-      arry_sample = input_collection.parts.map{|part| part.sample if part.class != "Sample"}
+  # @param array_of_samples  [Array<Sample>] Optional an array of all samples to be transfered
+  # if blank then all samples will be transfered
+  def transfer_to_working_plate(input_collection, working_collection, transfer_vol, array_of_samples: nil)
+    if array_of_samples.nil?
+      array_of_samples = input_collection.parts.map { |part| part.sample if part.class != 'Sample' }
     end
     input_rcx = []
     output_rcx = []
-    arry_sample.each do |sample|
-      input_location_array = get_item_sample_location(input_collection, sample)
-      input_sample_location = get_alpha_num_location(input_collection, sample)
-
+    array_of_samples.each do |sample|
+      input_location_array = get_item_sample_location(input_collection, sample) # 2d array
+      # [[0, 0], [1, 1]]
+      input_sample_location = get_alpha_num_location(input_collection, sample) # String
+      # "A1, B2"
       output_location_array = get_item_sample_location(working_collection, sample)
       output_sample_location = get_alpha_num_location(input_collection, sample)
 
       input_location_array.each do |sub_array|
-        sub_array.push(input_sample_location)
+        sub_array.push(input_sample_location) # [0,0,A1]
         input_rcx.push(sub_array)
       end
 
@@ -45,7 +45,7 @@ module CollectionTransfer
       end
     end
 
-    associate_plate_to_plate(working_collection, input_collection, "Input Plate", "Input Item")
+    associate_plate_to_plate(working_collection, input_collection, 'Input Plate', 'Input Item')
 
     show do
       title "Transfer from Stock Plate to Working Plate"
@@ -59,18 +59,18 @@ module CollectionTransfer
     end
   end
 
-
-  #Instructions to transfer from input plates to working_plates when an array of samples in collections is used
-  #Will group samples in same collection together for easier transfer.  Uses transfer_to_working_plate method
+  # Instructions to transfer physical samples from input plates to working_plates
+  # Groups samples by collection together for easier transfer
+  # Uses transfer_to_working_plate method
   #
-  # @working_plate Collection (Should have samples already associated to it)
-  # @input_fv_array Array[FieldValues] an array of field values of collections.  Typically from
-        # op.input_array(INPUT_ARRAY_NAME) when the individual inputs are samples in a collection
-  # @transfer_vol Int volume in ul of sample to transfer
-  def transfer_to_collection_from_fv_array(input_fv_array, working_plate, transfer_vol)
-    sample_arry_by_collection = input_fv_array.group_by{|fv| fv.collection}
-    sample_arry_by_collection.each do |input_collection, fv_array|
-      sample_array = fv_array.map{|fv| fv.sample}
+  # @param input_fv_array [Array<FieldValues>] an array of field values of collectionsy
+  # @param working_plate [Collection] (Should have samples already associated to it)
+  # @param transfer_vol [Integer] volume in ul of sample to transfer
+  def transfer_subsamples_to_working_plate(input_fv_array, working_plate, transfer_vol) 
+    # was transfer_to_collection_from_fv_array
+    sample_array_by_collection = input_fv_array.group_by { |fv| fv.collection }
+    sample_array_by_collection.each do |input_collection, fv_array|
+      sample_array = fv_array.map { |fv| fv.sample }
       transfer_to_working_plate(input_collection, working_plate, sample_array, transfer_vol)
     end
   end
@@ -88,10 +88,10 @@ module CollectionTransfer
   end
 
 
-  #determins if there are multiple output plate
+  #determines if there are multiple input plates
   #
-  #@operations OperationList list of operations in job
-  #returns boolean true if multiple plates
+  # @param operations [OperationList] list of operations in job
+  # @returns boolean true if multiple plates
   def multi_input_plates?(operations)
     if get_num_plates(operations, 'input') > 1
       return true
@@ -100,10 +100,10 @@ module CollectionTransfer
     end
   end
 
-  #determins if there are multiple output plate
+  #determines if there are multiple output plates
   #
-  #@operations OperationList list of operations in job
-  #returns boolean true if multiple plates
+  # @param operations [OperationList] list of operations in job
+  # @returns boolean true if multiple plates
   def multi_output_plates?(operations)
     if get_num_plates(operations, 'output') > 1
       return true
@@ -137,22 +137,24 @@ module CollectionTransfer
         end
       end
     end
-    return collection_array.uniq
+    collection_array.uniq
   end
 
 
   #associates all items in the added_plate to the items in the base plate
   # Associates corrosponding well locations.  Assocaites plate to plate and well to well
   # Only associates to wells that have a part in them
-  #
-  #@base_plate collcetion the plate that is getting the association
-  #@added_plate collection the plate that is transfering the association
+  # associate(key, value, upload = nil, options = { duplicates: false }) ⇒ Object#
+  # @param base_plate [Collection] the plate that is getting the association
+  # @param added_plate [Collection] the plate that is transfering the association
+  # @param plate_key [String] "input plate"
+  # @param item_key [String] "input item"
   def associate_plate_to_plate(base_plate, added_plate, plate_key, item_key)
-    base_plate.associate(plate_key, added_plate)
-    added_parts = added_plate.parts
-    base_parts = base_plate.parts
+    base_plate.associate(plate_key, added_plate) # {"input_plate" => added_plate}
+    added_parts = added_plate.parts # items in added plate
+    base_parts = base_plate.parts # items in base plate
     base_parts.each_with_index do |part, idx|
-      part.associate(item_key, added_parts[idx])
+      part.associate(item_key, added_parts[idx]) # {"input item" => }
     end
   end
 end

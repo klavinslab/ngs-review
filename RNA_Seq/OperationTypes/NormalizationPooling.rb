@@ -53,14 +53,14 @@ class Protocol
     operations.each do |op|
       input_fv_array = op.input_array(INPUT_ARRAY)
       output_fv_array = op.output_array(OUTPUT_ARRAY)
-      add_fv_array_samples_to_collection(input_fv_array, working_plate)
+      add_samples_to_collection(input_fv_array, working_plate)
       make_output_plate(output_fv_array, working_plate)
-      transfer_to_collection_from_fv_array(input_fv_array, working_plate, TRANSFER_VOL) if multi_plate
+      transfer_subsamples_to_working_plate(input_fv_array, working_plate, TRANSFER_VOL) if multi_plate
     end
 
     unless multi_plate
       input_plate = operations.first.input_array(INPUT_ARRAY).first.collection
-      relabel_plate(input_plate,working_plate) if !multi_plate
+      relabel_plate(input_plate, working_plate) if !multi_plate
       input_plate.mark_as_deleted
     else
       trash_object(get_array_of_collections(operations, 'input')) if multi_plate
@@ -72,7 +72,7 @@ class Protocol
 
   # Instructions for performing RNA_PREP
   #
-  #@param working_plate [collection] the plate with samples
+  # @param working_plate [collection] the plate with samples
   def normalization_pooling(working_plate)
     show do
       title 'Do the Normalization Pooling Steps'

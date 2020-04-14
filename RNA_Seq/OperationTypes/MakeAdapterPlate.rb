@@ -1,11 +1,9 @@
-#Cannon Mallory
-#malloc3@uw.edu
+# Cannon Mallory
+# malloc3@uw.edu
 #
-#This protocol is goes through determining what oligo adapters to use.
-#This information is uploaded through a CSV and a plate design is created.
-#The plate is then created and components are transfered to an intermidiate plate to be used later
-
-
+# This protocol is goes through determining what oligo adapters to use.
+# This information is uploaded through a CSV and a plate design is created.
+# The plate is then created and components are transfered to an intermidiate plate to be used later
 
 needs "Standard Libs/Debug"
 needs "Standard Libs/CommonInputOutputNames"
@@ -53,7 +51,7 @@ class Protocol
           note "Part ID: #{part.id}"
         end
       end
-      transfer_to_working_plate(collection, working_plate, arry_sample = parts, TRANSFER_VOL)
+      transfer_to_working_plate(collection, working_plate, array_of_samples = parts, TRANSFER_VOL)
 
     end
 
