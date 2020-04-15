@@ -79,7 +79,7 @@ class Protocol
     adapter_plate = make_new_plate(COLLECTION_TYPE)
 
     show do
-      title 'Upload CSV'
+      title 'Make Adapter Plate'
       note 'On the next page upload CSV of desired Adapters'
     end
 
@@ -87,7 +87,7 @@ class Protocol
     col_parts_hash = sample_from_csv(up_csv)
     col_parts_hash.each do |collection_item, parts|
       collection = Collection.find(collection_item.id)
-      adapter_plate.add_samples(parts)
+      add_samples_row_wise(parts, adapter_plate)
       transfer_to_working_plate(collection, adapter_plate, ADAPTER_TRANSFER_VOL, array_of_samples: parts)
     end
     adapter_plate

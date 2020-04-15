@@ -102,7 +102,7 @@ class Protocol
       end
     end
     show do
-      title 'Measurements Take'
+      title 'Measurements Taken'
       note 'Recorded Concentrations are listed below'
       table highlight_collection_rcx(working_plate, rcx_array, check: false)
     end
