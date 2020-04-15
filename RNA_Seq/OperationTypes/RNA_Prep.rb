@@ -88,7 +88,7 @@ class Protocol
     col_parts_hash.each do |collection_item, parts|
       collection = Collection.find(collection_item.id)
       adapter_plate.add_samples(parts)
-      transfer_to_working_plate(collection, adapter_plate, array_of_samples = parts, ADAPTER_TRANSFER_VOL)
+      transfer_to_working_plate(collection, adapter_plate, ADAPTER_TRANSFER_VOL, array_of_samples: parts)
     end
     adapter_plate
   end

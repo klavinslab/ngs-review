@@ -63,7 +63,7 @@ class Protocol
     end
 
     csv_uploads = get_validated_uploads(working_plate.parts.length,
-        CSV_HEADERS: false, file_location: CSV_LOCATION)
+        CSV_HEADERS, false, file_location: CSV_LOCATION)
 
     upload = csv_uploads.first
     csv = CSV.read(open(upload.url))

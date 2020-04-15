@@ -130,7 +130,7 @@ module UploadHelper
     pass = false
     until pass == true
       csv_uploads = upload_csv(tries, max_tries, file_location: file_location)
-      pass = validate_upload(csv_uploads, expected_data_points, headers, multi_files)
+      pass = validate_upload(csv_uploads, expected_data_points, headers, multiple_files: multi_files)
       tries += 1
       raise 'Too many failed upload attempts' if tries == max_tries && !pass
     end

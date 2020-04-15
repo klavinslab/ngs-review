@@ -51,7 +51,7 @@ module CollectionTransfer
       title "Transfer from Stock Plate to Working Plate"
       note "Please transfer <b>#{transfer_vol} #{MICROLITERS}</b> from stock plate (<b>ID:#{input_collection.id}</b>) to working
                                 plate (<b>ID:#{working_collection.id}</b>) per tables below"
-      note "Separator"
+      separator
       note "Stock Plate (ID: <b>#{input_collection.id}</b>):"
       table highlight_collection_rcx(input_collection, input_rcx, check: false)
       note "Working Plate (ID: <b>#{working_collection}</b>):"
@@ -71,7 +71,7 @@ module CollectionTransfer
     sample_array_by_collection = input_fv_array.group_by { |fv| fv.collection }
     sample_array_by_collection.each do |input_collection, fv_array|
       sample_array = fv_array.map { |fv| fv.sample }
-      transfer_to_working_plate(input_collection, working_plate, sample_array, transfer_vol)
+      transfer_to_working_plate(input_collection, working_plate, transfer_vol, array_of_samples: sample_array)
     end
   end
 
