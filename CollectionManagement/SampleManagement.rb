@@ -20,7 +20,7 @@ module SampleManagement
     loc_array.each do |loc| # takes coords [2, 0] index=0
       location << ALPHA26[loc[0]] + (loc[1] + 1).to_s # 2,0 -> C1, 4,0 -> E1
     end
-    location.to_s
+    location.join(",") # removes the ["A1"] the brackets and parantheses 
   end
 
   # Finds the location of an item or sample
@@ -47,8 +47,32 @@ module SampleManagement
     slots_left = working_plate.get_empty.length
     raise 'There are too many samples in this batch.' if samples_to_add.length > slots_left
 
-    working_plate.add_samples(samples_to_add)
+    add_samples_row_wise(samples_to_add, working_plate)
     # TODO: add error checking for if the working_plate is full
+  end
+
+  # Adds samples to the first slot in the first available colum 
+  # as apposed to column wise that the base version does.
+  #
+  # @param samples_to_add [Array<Samples>] an array of samples
+  # @param collection [Collection] the collection to include samples
+  def add_samples_row_wise(samples_to_add, collection)
+    col_matrix = collection.matrix
+    collumns = col_matrix.first.size
+    rows = col_matrix.size
+    samples_to_add.each do |sample|
+      break_patern = false
+      collumns.times do |col|
+        rows.times do |row|
+            if collection.part(row, col).nil?
+                collection.set(row,col, sample)
+                break_patern = true
+                break
+            end
+        end
+        break if break_patern
+      end
+    end
   end
 
   # Replaces operations.make
@@ -71,7 +95,7 @@ module SampleManagement
   # @return part [Item] the item at the given location
   def part_alpha_num(collection, loc)
     row = ALPHA26.find_index(loc[0 , 1])
-    # col = loc[1...].to_i - 1
+    col = loc[1...].to_i - 1
     dem = collection.dimensions
     raise 'Location outside collection dimensions' if row > dem[0] || col > dem[1]
 
