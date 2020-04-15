@@ -31,17 +31,16 @@ module CollectionActions
     end
   end
 
-
-  #Stores all input objects in operation list
+  # Stores all input objects in operation list
   #
   # @param operations [OperationList] operation list
   # @location [String] the location that things are to be put
-  def table_of_job_object_location(operations, input_output: "input", location: nil)
+  def table_of_job_object_location(operations, input_output: 'input', location: nil)
     obj_array = []
     operations.each do |op|
-      array_of_fv = op.inputs.reject { |fv| 
+      array_of_fv = op.inputs.reject { |fv|
               fv.collection.nil? } if input_output == 'input'
-      array_of_fv = op.outputs.reject { |fv| 
+      array_of_fv = op.outputs.reject { |fv|
               fv.collection.nil? } if input_output == 'output'
       obj_array.concat(get_obj_from_fv_array(array_of_fv))
     end
@@ -53,7 +52,7 @@ module CollectionActions
   # Get the obj  from the fv (either item or collection)
   #
   # @param array_of_fv [Array] array of field values
-  # @return obj_array [Array] array of objects (eiter collections or items)
+  # @return obj_array [Array] array of objects (either collections or items)
   def get_obj_from_fv_array(array_of_fv)
     obj_array = []
     array_of_fv.each do |fv|
