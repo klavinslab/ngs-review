@@ -33,7 +33,7 @@ module CollectionDisplay
   # @param col [Integer] the column
   # @param id [String] what will be printed in the table
   #                    (TODO EMPTY STRING/DONT REPLACE CONTENT)
-  # @param check [Boolean] optional determins if cell is checkable or not
+  # @param check [Boolean] optional determines if cell is checkable or not
   def highlight_cell(tbl, row, col, id, check: true)
     tbl[row][col] = { content: id, class: 'td-filled-slot', check: check }
   end

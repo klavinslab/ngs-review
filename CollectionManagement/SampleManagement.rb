@@ -14,10 +14,11 @@ module SampleManagement
   # @param sample [Sample] the Sample that you want to locate
   # @return [String] the Alpha Numerica location(s) e.g. A1, A2
   def get_alpha_num_location(collection, sample)
-    loc_array = get_item_sample_location(collection, sample) # [[r1, c3],[r2, c7]]
+    loc_array = get_item_sample_location(collection, sample) 
+    # [[r0, c0],[r1, c0], [r2,c0]]
     location = []
-    loc_array.each do |loc| # takes coords [r0, c0] index=0
-      location << ALPHA26[loc[0]] + (loc[1] + 1).to_s # 0 -> A
+    loc_array.each do |loc| # takes coords [2, 0] index=0
+      location << ALPHA26[loc[0]] + (loc[1] + 1).to_s # 2,0 -> C1, 4,0 -> E1
     end
     location.join(",") # removes the ["A1"] the brackets and parantheses 
   end
@@ -26,7 +27,7 @@ module SampleManagement
   #
   # @param collection [Collection] the collection containing the item or sample
   # @param part [Item, Part, Sample] item, part, or sample to be found
-  # @return [Array] Array of item, part, or sample locations in form [[r1,c1],[r2,c2]]
+  # @return [Array] Array of item, part, or sample locations in form [[r1,c1],[r2,c1]]
   def get_item_sample_location(collection, part)
     collection.find(part)
   end
@@ -41,6 +42,7 @@ module SampleManagement
     samples_to_add = []
     # collection, finds collection associated with child_item_id
     samples = samples.sort_by { |fv| [fv.collection.find(fv.sample).first[1], fv.collection.find(fv.sample).first[0]] }
+
     samples.each { |fv| samples_to_add << fv.sample }
     slots_left = working_plate.get_empty.length
     raise 'There are too many samples in this batch.' if samples_to_add.length > slots_left

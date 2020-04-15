@@ -14,7 +14,7 @@ module CollectionActions
   def store_input_collections(operations, location: nil)
     show do
       title 'Put Away the Following Items'
-      table table_of_job_object_location(operations, input_output: 'input',
+      table table_of_job_object_location(operations, role: 'input',
               location: location)
     end
   end
@@ -26,23 +26,23 @@ module CollectionActions
   def store_output_collections(operations, location: nil)
     show do
       title 'Put Away the Following Items'
-      table table_of_job_object_location(operations, input_output: 'output',
+      table table_of_job_object_location(operations, role: 'output',
               location: location)
     end
   end
 
-
-  #Stores all input objects in operation list
+  # Stores all input objects in operation list
   #
   # @param operations [OperationList] operation list
-  # @location [String] the location that things are to be put
-  def table_of_job_object_location(operations, input_output: "input", location: nil)
+  # @param role [String] whether object is an input or an output
+  # @param location [String] the location to put things
+  def table_of_job_object_location(operations, role: 'input', location: nil)
     obj_array = []
     operations.each do |op|
-      array_of_fv = op.inputs.reject { |fv| 
-              fv.collection.nil? } if input_output == 'input'
-      array_of_fv = op.outputs.reject { |fv| 
-              fv.collection.nil? } if input_output == 'output'
+      array_of_fv = op.inputs.reject { |fv|
+              fv.collection.nil? } if role == 'input'
+      array_of_fv = op.outputs.reject { |fv|
+              fv.collection.nil? } if role == 'output'
       obj_array.concat(get_obj_from_fv_array(array_of_fv))
     end
     obj_array = obj_array.uniq
@@ -50,10 +50,10 @@ module CollectionActions
     get_collection_locations(obj_array)
   end
 
-  # Get the obj  from the fv (either item or collection)
+  # Get the obj from the fv (either item or collection)
   #
   # @param array_of_fv [Array] array of field values
-  # @return obj_array [Array] array of objects (eiter collections or items)
+  # @return obj_array [Array] array of objects (either collections or items)
   def get_obj_from_fv_array(array_of_fv)
     obj_array = []
     array_of_fv.each do |fv|

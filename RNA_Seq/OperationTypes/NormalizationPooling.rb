@@ -33,7 +33,7 @@ class Protocol
 
     validate_cdna_qc(operations)
 
-    multi_plate = multi_input_plates?(operations)
+    multi_plate = multiple_plates?(operations)
 
     working_plate = make_new_plate(COLLECTION_TYPE, label_plate: multi_plate)
 
@@ -59,9 +59,10 @@ class Protocol
     store_output_collections(operations, location: 'Freezer')
   end
 
-  #Instructions for performing RNA_PREP
+  # Instructions for performing RNA_PREP
   #
-  #@param working_plate [collection] the plate with samples
+  # @param working_plate [Collection] the plate with samples
+
   def normalization_pooling(working_plate)
     show do
       title "Do the Normalization Pooling Steps"
