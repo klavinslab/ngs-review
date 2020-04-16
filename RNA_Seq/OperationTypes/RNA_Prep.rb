@@ -33,12 +33,11 @@ class Protocol
 
   ADAPTER_TRANSFER_VOL = 12 # volume of adapter to transfer
   TRANSFER_VOL = 20 # volume of sample to be transfered in ul
-  CONC_RANGE = (50...100) # acceptable concentration range
+  CONC_RANGE = (50...100).freeze # acceptable concentration range
   CSV_HEADERS = ['Plate ID', 'Well Location'].freeze
   CSV_LOCATION = 'Location TBD'
 
   def main
-
     validate_inputs(operations, inputs_match_outputs: true)
     validate_concentrations(operations, CONC_RANGE)
 
@@ -109,12 +108,12 @@ class Protocol
 
       id_idx = first_row.find_index(CSV_HEADERS[0])
       loc_idx = first_row.find_index(CSV_HEADERS[1])
-      csv.drop(1).each_with_index do |row, idx|
+      csv.drop(1).each_with_index do |row, _idx|
         collection = Collection.find(row[id_idx])
         part = part_alpha_num(collection, row[loc_idx])
         parts.push(part)
       end
     end
-    parts.group_by { |part| part.containing_collection }
+    parts.group_by(&:containing_collection)
   end
 end

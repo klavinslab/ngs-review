@@ -64,24 +64,24 @@ class Protocol
     end
 
     csv_uploads = get_validated_uploads(working_plate.parts.length,
-        CSV_HEADERS, false, file_location: CSV_LOCATION)
+                                        CSV_HEADERS, false, file_location: CSV_LOCATION)
 
     upload = csv_uploads.first
     csv = CSV.read(open(upload.url))
     conc_idx = csv.first.find_index(CSV_HEADERS[1])
     loc_idx = csv.first.find_index(CSV_HEADERS[0])
-    csv.drop(1).each_with_index do |row, idx|
+    csv.drop(1).each_with_index do |row, _idx|
       alpha_loc = row[loc_idx]
       conc = row[conc_idx].to_i
       part = part_alpha_num(working_plate, alpha_loc)
-      if !part.nil?
-        part.associate(CON_KEY, conc)
-        samp = part.sample
-        operations.each do |op|
-          op.input_array(INPUT_ARRAY).each do |field_value|
-            if samp == field_value.sample
-              field_value.part.associate(CON_KEY, conc)
-            end
+      next if part.nil?
+
+      part.associate(CON_KEY, conc)
+      samp = part.sample
+      operations.each do |op|
+        op.input_array(INPUT_ARRAY).each do |field_value|
+          if samp == field_value.sample
+            field_value.part.associate(CON_KEY, conc)
           end
         end
       end

@@ -55,14 +55,14 @@ class Protocol
     input_rcx = []
     operations.each do |op|
       input_array = op.input_array(INPUT_ARRAY)
-      input_items = input_array.map { |fv| fv.item }
-      array_of_samples = input_array.map { |fv| fv.sample }
+      input_items = input_array.map(&:item)
+      array_of_samples = input_array.map(&:sample)
       input_items.each_with_index do |item, idx|
         item.associate(QC2_KEY, 'Pass')
         sample = array_of_samples[idx]
         working_plate_loc_array = working_plate.find(sample)
         working_plate_loc_array.each do |sub_array|
-          sub_array.push("#{item.get(QC2_KEY)}")
+          sub_array.push(item.get(QC2_KEY).to_s)
           input_rcx.push(sub_array)
         end
       end

@@ -12,7 +12,6 @@
 #
 # Methods for displaying information about collections
 module CollectionDisplay
-
   # Creates a table with the same dimensions as the input collection
   #
   # @param collection [Collection] the collection to be represented by the table
@@ -48,8 +47,10 @@ module CollectionDisplay
   #     x = string
   # @return [table]
   def highlight_rcx(table, rcx_list, check: true)
-    raise "Passed Collection when Table needed.  You may want to use
-          'highlight_collection_rcx' instead" if table.class == 'Collection'
+    if table.class == 'Collection'
+      raise "Passed Collection when Table needed.  You may want to use
+            'highlight_collection_rcx' instead"
+    end
     rcx_list.each do |rcx|
       rcx.push(check)
     end
@@ -98,10 +99,10 @@ module CollectionDisplay
   # @param check [Boolean] wheather cells should be Checkable
   # @param &rc_block [Block] to determine rc list
   # @return [Table]
-  def highlight_rc(table, rc_list, check: true, &rc_block)
-    rcx_list = rc_list.map { |r, c|
-      block_given? ? [r, c, yield(r, c)] : [r, c, ""]
-    }
+  def highlight_rc(table, rc_list, check: true)
+    rcx_list = rc_list.map do |r, c|
+      block_given? ? [r, c, yield(r, c)] : [r, c, '']
+    end
     highlight_rcx(table, rcx_list, check: check)
   end
 
@@ -114,10 +115,10 @@ module CollectionDisplay
   # @param check [Boolean] Optional wheather cells should be Checkable
   # @param &rc_block [Block] to determine rc list
   # @return [Table]
-  def highlight_collection_rc(collection, rc_list,  check: true, &rc_block)
-    rcx_list = rc_list.map { |r, c|
-      block_given? ? [r, c, yield(r, c)] : [r, c, ""]
-    }
+  def highlight_collection_rc(collection, rc_list, check: true)
+    rcx_list = rc_list.map do |r, c|
+      block_given? ? [r, c, yield(r, c)] : [r, c, '']
+    end
     highlight_collection_rcx(collection, rcx_list, check: check)
   end
 
@@ -160,7 +161,7 @@ module CollectionDisplay
   # @param c [Integer] column integer
   def r_c_to_slot(collection, r, c)
     rows, cols = collection.dimensions = collection.object_type.rows
-    r*cols + c+1
+    r * cols + c + 1
   end
 
   # Makes an Alpha Numeric Table from Collection
@@ -171,7 +172,7 @@ module CollectionDisplay
     slots = (1..size).to_a
     alpha_r = ('A'..'H').to_a
     slots.each_slice(collection.object_type.columns).each_with_index.map do |row, r_idx|
-      row.each_with_index.map do |col, c_idx|
+      row.each_with_index.map do |_col, c_idx|
         { content: "#{alpha_r[r_idx]}#{c_idx + 1}", class: 'td-empty-slot' }
       end
     end
@@ -183,10 +184,10 @@ module CollectionDisplay
   # @param rc_list [Array] Array of rows and colums [[row,col],...] row & col are int
   # @param check [Boolean] Default True weather cells are checkable
   # @param &rc_block [Block] Optional tbd
-  def highlight_alpha_rc(collection, rc_list, check: true, &rc_block)
-    rcx_list = rc_list.map { |r, c|
+  def highlight_alpha_rc(collection, rc_list, check: true)
+    rcx_list = rc_list.map do |r, c|
       block_given? ? [r, c, yield(r, c)] : [r, c, '']
-    }
+    end
     highlight_alpha_rcx(collection, rcx_list, check: check)
   end
 

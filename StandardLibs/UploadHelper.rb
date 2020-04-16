@@ -3,7 +3,6 @@
 # helper function for uploading files
 # note: data associations should be handled externally
 module UploadHelper
-
   require 'csv'
   require 'open-uri'
 
@@ -45,23 +44,19 @@ module UploadHelper
         upload var: 'files'
       end
       # number of uploads
-      if !uploads[:files].nil?
-        number_of_uploads = uploads[:files].length
-      end
+      number_of_uploads = uploads[:files].length unless uploads[:files].nil?
     end
 
     if number_of_uploads != exp_upload_num
-      show {note "Final number of uploads (#{number_of_uploads}) not equal to expected number #{exp_upload_num}! Please check."}
+      show { note "Final number of uploads (#{number_of_uploads}) not equal to expected number #{exp_upload_num}! Please check." }
       return nil
     end
 
     # format uploads before returning
     ups = [] # upload hashes
-    if !uploads[:files].nil?
-      uploads[:files].each_with_index do |upload_hash, ii|
-        up = Upload.find(upload_hash[:id])
-        ups[ii] = up
-      end
+    uploads[:files]&.each_with_index do |upload_hash, ii|
+      up = Upload.find(upload_hash[:id])
+      ups[ii] = up
     end
     ups
   end
@@ -95,27 +90,33 @@ module UploadHelper
     fail_message = ''
 
     if multiple_files == false
-      fail_message += 'More than one file was uploaded, ' if upload_array.length > 1
+      if upload_array.length > 1
+        fail_message += 'More than one file was uploaded, '
+      end
       upload = upload_array.first
     end
 
     csv = CSV.read(open(upload.url))
-    fail_message += 'CSV length is shorter
-        than expected, ' if csv.length - 1 < expected_num_inputs
+    if csv.length - 1 < expected_num_inputs
+      fail_message += 'CSV length is shorter
+          than expected, '
+    end
 
     first_row = csv.first
     # Should remove leading blank space from CSV
     first_row[0][0] = ''
 
     csv_headers.each do |header|
-      fail_message += "<b>#{header} Header</b> either does not exist or
-        is in wrong format, " if !first_row.include?(header)
+      unless first_row.include?(header)
+        fail_message += "<b>#{header} Header</b> either does not exist or
+          is in wrong format, "
+      end
     end
 
-    if fail_message.length > 0
+    if !fail_message.empty?
       show do
         title 'Warning Uploaded CSV does not fit correct format'
-        note "#{fail_message}"
+        note fail_message.to_s
       end
       return false
     else

@@ -12,7 +12,6 @@ needs 'Standard Libs/Units'
 needs 'CollectionManagement/SampleManagement'
 
 module CollectionTransfer
-
   include Units
   include SampleManagement
 
@@ -33,7 +32,9 @@ module CollectionTransfer
   # 3. give instructions
   def transfer_to_working_plate(input_collection, working_collection, transfer_vol, array_of_samples: nil)
     if array_of_samples.nil?
-      array_of_samples = input_collection.parts.map { |part| part.sample if part.class != 'Sample' }
+      array_of_samples = input_collection.parts.map do |part|
+        part.sample if part.class != 'Sample'
+      end
     end
     input_row_column_location = []
     output_row_column_location = []
@@ -79,9 +80,9 @@ module CollectionTransfer
   # @param transfer_vol [Integer] volume in ul of sample to transfer
   def transfer_subsamples_to_working_plate(input_fv_array, working_plate, transfer_vol)
     # was transfer_to_collection_from_fv_array
-    sample_array_by_collection = input_fv_array.group_by { |fv| fv.collection }
+    sample_array_by_collection = input_fv_array.group_by(&:collection)
     sample_array_by_collection.each do |input_collection, fv_array|
-      sample_array = fv_array.map { |fv| fv.sample }
+      sample_array = fv_array.map(&:sample)
       transfer_to_working_plate(input_collection, working_plate, transfer_vol, array_of_samples: sample_array)
     end
   end
@@ -126,9 +127,7 @@ module CollectionTransfer
       obj_array = op.inputs if role == 'input'
       obj_array = op.outputs if role == 'output'
       obj_array.each do |fv|
-        if fv.collection != nil
-          collection_array.push(fv.collection)
-        end
+        collection_array.push(fv.collection) unless fv.collection.nil?
       end
     end
     collection_array.uniq

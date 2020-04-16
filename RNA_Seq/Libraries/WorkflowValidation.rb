@@ -25,20 +25,27 @@ module WorkflowValidation
     total_inputs = []
     total_outputs = []
     operations.each do |op|
-      total_inputs += op.input_array(INPUT_ARRAY).map! { |fv| fv.sample }
-      total_outputs += op.output_array(OUTPUT_ARRAY).map! { |fv| fv.sample }
+      total_inputs += op.input_array(INPUT_ARRAY).map!(&:sample)
+      total_outputs += op.output_array(OUTPUT_ARRAY).map!(&:sample)
     end
 
-    # Confused about the set up -- each sample will be an op, 
+    # Confused about the set up -- each sample will be an op,
     # or one operation will work with multiple samples?
     # If each sample is an individual, where is the array? Why is the variable "input array".
     # Spell out Field Value in variables -- makes it easier if someone wants to look up method in the API
     # TODO for myself -- come back to this later
-    a = total_inputs.detect{ |item| total_inputs.count(item) > 1}
-    raise "Item #{a.id} has been included multiple times in this job" if a != nil
-    raise 'The number of Input Items and Output
-            Items do not match' if total_inputs.length != total_outputs.length && inputs_match_outputs
-    raise 'Too many Items for this job. Please re-lauch job with fewer Items' if total_inputs.length > MAX_INPUTS
+    a = total_inputs.detect { |item| total_inputs.count(item) > 1 }
+    unless a.nil?
+      raise "Item #{a.id} has been included multiple times in this job"
+    end
+
+    if total_inputs.length != total_outputs.length && inputs_match_outputs
+      raise 'The number of Input Items and Output
+              Items do not match'
+    end
+    if total_inputs.length > MAX_INPUTS
+      raise 'Too many Items for this job. Please re-lauch job with fewer Items'
+    end
     raise 'There are no Items for this job.' if total_inputs.length <= 0
   end
 
@@ -47,8 +54,8 @@ module WorkflowValidation
   #
   # @param failed_ops [Hash] Key: Operation ID, Value: Array[Items]
   def show_errored_operations(failed_ops)
-    show do 
-      title "Some Operations have failed QC"
+    show do
+      title 'Some Operations have failed QC'
       note "<b>#{failed_ops.length}</b> Operations have Items that failed QC"
       note "The next few pages will show which Operations and Items
               are at fault"
@@ -56,7 +63,7 @@ module WorkflowValidation
 
     failed_ops.each do |op, errored_items|
       show do
-        title "Failed Operation and Items"
+        title 'Failed Operation and Items'
         note "Operation <b>#{op.id}</b> from Plan <b>#{op.plan.id}</b>"
         errored_items.each do |item|
           note "Item <b>#{item.id}</b>"
@@ -129,11 +136,12 @@ module WorkflowValidation
   def get_failed_cdna(op)
     failed_samples = []
     op.input_array(INPUT_ARRAY).each do |field_value|
-      failed_samples.push(field_value.part) unless field_value.item.get(QC2_KEY) == 'Pass'
+      unless field_value.item.get(QC2_KEY) == 'Pass'
+        failed_samples.push(field_value.part)
+      end
     end
     failed_samples
   end
-
 
   # Manages failed ops.  Coordinates what needs to happen with failed operations
   #
@@ -142,23 +150,23 @@ module WorkflowValidation
   def manage_failed_ops(operations, failed_ops)
     unless failed_ops.empty?
 
-      #must remove all ops from the job that are in the same plan as the failed ops
+      # must remove all ops from the job that are in the same plan as the failed ops
       removed_ops = get_removed_ops(operations, failed_ops)
 
-      #get the total number of items that were removed from the job
+      # get the total number of items that were removed from the job
       num_items_removed = get_num_items(removed_ops) + get_num_items(failed_ops)
 
-      #get total number of items originally in th job
+      # get total number of items originally in th job
       total_items = get_num_items(operations)
 
-      #get the number of items still in the job
+      # get the number of items still in the job
       num_items_left = total_items - num_items_removed
-      
-      if num_items_left == 0
-        cancel_job = true
-      else
-        cancel_job = get_cancel_feedback(total_items, num_items_removed, num_items_left)
-      end
+
+      cancel_job = if num_items_left == 0
+                     true
+                   else
+                     get_cancel_feedback(total_items, num_items_removed, num_items_left)
+                   end
 
       show_errored_operations(failed_ops)
 
@@ -171,7 +179,6 @@ module WorkflowValidation
     end
   end
 
-
   # gets feed back from the technition on weather they want to continue with
   # the job or to cancel and re batch.
   #
@@ -181,32 +188,30 @@ module WorkflowValidation
   # @return cancel [Boolean] true if the job should be canceled
   def get_cancel_feedback(total_items, num_failed, num_left)
     cancel = nil
-    10.times do 
-      feedback_one = show do 
-        title "Some Items in this Job failed QC"
+    10.times do
+      feedback_one = show do
+        title 'Some Items in this Job failed QC'
         separator
-        warning "Warning"
+        warning 'Warning'
         separator
-        note "<b>#{num_failed}</b> out of <b>#{total_items}</b> items were 
+        note "<b>#{num_failed}</b> out of <b>#{total_items}</b> items were
               removed from this job"
         note "Do you want to continue this job with the remaining <b>#{num_left}</b> items"
-        select ["Yes", "No"], var: "continue".to_sym, label: "Continue?", default: 1
+        select %w[Yes No], var: 'continue'.to_sym, label: 'Continue?', default: 1
       end
 
-      if feedback_one[:continue] == "No"
+      if feedback_one[:continue] == 'No'
         feedback_two = show do
-          title "Are You Sure?"
-          note "Are you sure you want to cancel the whole job?"
-          select ["Yes", "No"], var: "cancel".to_sym, label: "Cancel?", default: 1
+          title 'Are You Sure?'
+          note 'Are you sure you want to cancel the whole job?'
+          select %w[Yes No], var: 'cancel'.to_sym, label: 'Cancel?', default: 1
         end
-        if feedback_two[:cancel] == "Yes"
-          return true
-        end
+        return true if feedback_two[:cancel] == 'Yes'
       else
         return false
       end
     end
-    raise "Job Canceled, answer was not consistant.  All Operations errored"
+    raise 'Job Canceled, answer was not consistant.  All Operations errored'
   end
 
   # get all the operations that may be in the same plan that should be removed
@@ -217,7 +222,7 @@ module WorkflowValidation
   # @return removed_ops [Array] list of operationts that should be removed
   def get_removed_ops(operations, failed_ops)
     removed_ops = []
-    failed_ops.each do |failed_op, errored_items|
+    failed_ops.each do |failed_op, _errored_items|
       plan = failed_op.plan
       operations.each do |op|
         unless failed_ops.keys.include?(op) || removed_ops.include?(op) || op.plan != plan
@@ -227,8 +232,6 @@ module WorkflowValidation
     end
     removed_ops
   end
-
-
 
   # cancels all failed ops and removes from operations list
   # sets all like ops in same plans as failed ops to 'delayed'
@@ -242,20 +245,18 @@ module WorkflowValidation
     pause_like_ops(operations, failed_ops)
   end
 
-
   # 'delay' all like ops in plans that contained failed_ops
   #
   # @param operations [OperationList] list of operations
   # @param failed_ops [Hash] list of failed operations
-  def pause_like_ops(operations, failed_ops)
+  def pause_like_ops(_operations, failed_ops)
     failed_ops.keys.each do |failed_op|
       plan = failed_op.plan
-      like_ops = plan.operations.select{ |op| 
-              op.operation_type.id == failed_op.operation_type.id}
+      like_ops = plan.operations.select do |op|
+        op.operation_type.id == failed_op.operation_type.id
+      end
       like_ops.each do |_op|
-        unless _op == failed_op
-          _op.set_status_recursively('delayed')
-        end
+        _op.set_status_recursively('delayed') unless _op == failed_op
       end
     end
   end
@@ -264,11 +265,8 @@ module WorkflowValidation
   #
   # @param operations [OperationList] list of operations
   # @param remove_ops [Array] or [Hash] list of failed operations
-  def cancel_ops(oeprations, remove_ops)
-
-    if remove_ops.is_a?(Hash)
-      remove_ops = remove_ops.keys
-    end
+  def cancel_ops(_oeprations, remove_ops)
+    remove_ops = remove_ops.keys if remove_ops.is_a?(Hash)
 
     remove_ops.each do |op|
       op.set_status_recursively('delayed')
@@ -281,10 +279,7 @@ module WorkflowValidation
   # @param ops [Array] Operation List is acceptable of operations
   # @return nmum_items [Int] the number of input items (Hash is acceptable)
   def get_num_items(ops)
-
-    if ops.is_a?(Hash)
-      ops = ops.keys
-    end
+    ops = ops.keys if ops.is_a?(Hash)
 
     num_items = 0
     ops.each do |op|
@@ -292,5 +287,4 @@ module WorkflowValidation
     end
     num_items
   end
-
 end

@@ -15,7 +15,7 @@ module CollectionActions
     show do
       title 'Put Away the Following Items'
       table table_of_job_object_location(operations, role: 'input',
-              location: location)
+                                                     location: location)
     end
   end
 
@@ -27,7 +27,7 @@ module CollectionActions
     show do
       title 'Put Away the Following Items'
       table table_of_job_object_location(operations, role: 'output',
-              location: location)
+                                                     location: location)
     end
   end
 
@@ -39,10 +39,16 @@ module CollectionActions
   def table_of_job_object_location(operations, role: 'input', location: nil)
     obj_array = []
     operations.each do |op|
-      array_of_fv = op.inputs.reject { |fv|
-              fv.collection.nil? } if role == 'input'
-      array_of_fv = op.outputs.reject { |fv|
-              fv.collection.nil? } if role == 'output'
+      if role == 'input'
+        array_of_fv = op.inputs.reject do |fv|
+          fv.collection.nil?
+        end
+      end
+      if role == 'output'
+        array_of_fv = op.outputs.reject do |fv|
+          fv.collection.nil?
+        end
+      end
       obj_array.concat(get_obj_from_fv_array(array_of_fv))
     end
     obj_array = obj_array.uniq
@@ -123,11 +129,11 @@ module CollectionActions
       tab = [['Item', 'Waste Container']]
       obj_array.each do |obj|
         obj.mark_as_deleted
-        if hazardous
-          waste_container = 'Biohazard Waste'
-        else
-          waste_container = 'Trash Can'
-        end
+        waste_container = if hazardous
+                            'Biohazard Waste'
+                          else
+                            'Trash Can'
+                          end
         tab.push([obj.id, waste_container])
       end
       table tab

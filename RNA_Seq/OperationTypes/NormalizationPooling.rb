@@ -1,18 +1,20 @@
-#Cannon Mallory
-#UW-BIOFAB
-#03/04/2019
-#malloc3@uw.edu
+# frozen_string_literal: true
 
-needs "Standard Libs/Debug"
-needs "Standard Libs/CommonInputOutputNames"
-needs "Standard Libs/Units"
+# Cannon Mallory
+# UW-BIOFAB
+# 03/04/2019
+# malloc3@uw.edu
 
-needs "Collection_Management/CollectionDisplay"
-needs "Collection_Management/CollectionTransfer"
-needs "Collection_Management/CollectionActions"
-needs "Collection_Management/SampleManagement"
-needs "RNA_Seq/WorkflowValidation"
-needs "RNA_Seq/KeywordLib"
+needs 'Standard Libs/Debug'
+needs 'Standard Libs/CommonInputOutputNames'
+needs 'Standard Libs/Units'
+
+needs 'Collection_Management/CollectionDisplay'
+needs 'Collection_Management/CollectionTransfer'
+needs 'Collection_Management/CollectionActions'
+needs 'Collection_Management/SampleManagement'
+needs 'RNA_Seq/WorkflowValidation'
+needs 'RNA_Seq/KeywordLib'
 
 class Protocol
   include Debug
@@ -24,11 +26,9 @@ class Protocol
   include CommonInputOutputNames
   include KeywordLib
 
-  TRANSFER_VOL = 20   #volume of sample to be transfered in ul
-
+  TRANSFER_VOL = 20 # volume of sample to be transfered in ul
 
   def main
-
     validate_inputs(operations, inputs_match_outputs: true)
 
     validate_cdna_qc(operations)
@@ -44,15 +44,17 @@ class Protocol
       output_fv_array = op.output_array(OUTPUT_ARRAY)
       add_samples_to_collection(input_fv_array, working_plate)
       make_output_plate(output_fv_array, working_plate)
-      transfer_subsamples_to_working_plate(input_fv_array, working_plate, TRANSFER_VOL) if multi_plate
+      if multi_plate
+        transfer_subsamples_to_working_plate(input_fv_array, working_plate, TRANSFER_VOL)
+      end
     end
 
-    unless multi_plate
-      input_plate = operations.first.input_array(INPUT_ARRAY).first.collection
-      relabel_plate(input_plate,working_plate)
-      input_plate.mark_as_deleted
-    else
+    if multi_plate
       trash_object(get_array_of_collections(operations, 'input'))
+    else
+      input_plate = operations.first.input_array(INPUT_ARRAY).first.collection
+      relabel_plate(input_plate, working_plate)
+      input_plate.mark_as_deleted
     end
 
     normalization_pooling(working_plate)
@@ -65,7 +67,7 @@ class Protocol
 
   def normalization_pooling(working_plate)
     show do
-      title "Do the Normalization Pooling Steps"
+      title 'Do the Normalization Pooling Steps'
       note "Run typical Normalization Pooling protocol with plate #{working_plate.id}"
       table highlight_non_empty(working_plate, check: false)
     end
