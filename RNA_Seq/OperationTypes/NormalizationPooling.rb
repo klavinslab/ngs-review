@@ -1,18 +1,20 @@
-#Cannon Mallory
-#UW-BIOFAB
-#03/04/2019
-#malloc3@uw.edu
+# frozen_string_literal: true
 
-needs "Standard Libs/Debug"
-needs "Standard Libs/CommonInputOutputNames"
-needs "Standard Libs/Units"
+# Cannon Mallory
+# UW-BIOFAB
+# 03/04/2019
+# malloc3@uw.edu
 
-needs "Collection_Management/CollectionDisplay"
-needs "Collection_Management/CollectionTransfer"
-needs "Collection_Management/CollectionActions"
-needs "Collection_Management/SampleManagement"
-needs "RNA_Seq/WorkflowValidation"
-needs "RNA_Seq/KeywordLib"
+needs 'Standard Libs/Debug'
+needs 'Standard Libs/CommonInputOutputNames'
+needs 'Standard Libs/Units'
+
+needs 'Collection_Management/CollectionDisplay'
+needs 'Collection_Management/CollectionTransfer'
+needs 'Collection_Management/CollectionActions'
+needs 'Collection_Management/SampleManagement'
+needs 'RNA_Seq/WorkflowValidation'
+needs 'RNA_Seq/KeywordLib'
 
 class Protocol
   include Debug
@@ -24,8 +26,7 @@ class Protocol
   include CommonInputOutputNames
   include KeywordLib
 
-  TRANSFER_VOL = 20   #volume of sample to be transfered in ul
-
+  TRANSFER_VOL = 20 #volume of sample to be transfered in ul
 
   def main
 
@@ -49,7 +50,7 @@ class Protocol
 
     unless multi_plate
       input_plate = operations.first.input_array(INPUT_ARRAY).first.collection
-      relabel_plate(input_plate,working_plate)
+      relabel_plate(input_plate, working_plate)
       input_plate.mark_as_deleted
     else
       trash_object(get_array_of_collections(operations, 'input'))
@@ -62,10 +63,9 @@ class Protocol
   # Instructions for performing RNA_PREP
   #
   # @param working_plate [Collection] the plate with samples
-
   def normalization_pooling(working_plate)
     show do
-      title "Do the Normalization Pooling Steps"
+      title 'Do the Normalization Pooling Steps'
       note "Run typical Normalization Pooling protocol with plate #{working_plate.id}"
       table highlight_non_empty(working_plate, check: false)
     end

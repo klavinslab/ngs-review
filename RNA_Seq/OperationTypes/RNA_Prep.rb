@@ -95,7 +95,6 @@ class Protocol
 
   # Parses CSV and returns an array of all the samples
   #
-  #
   # @param csv_uploads [array] array of uploaded CSV files
   # @returns hash [key: collection, array[parts]] hash of collection and samples
   def sample_from_csv(csv_uploads)

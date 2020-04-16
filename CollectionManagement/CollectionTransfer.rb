@@ -60,8 +60,9 @@ module CollectionTransfer
 
     show do
       title 'Transfer from Stock Plate to Working Plate'
-      note "Please transfer <b>#{transfer_vol} #{MICROLITERS}</b> from stock plate (<b>ID:#{input_collection.id}</b>) to working
-                                plate (<b>ID:#{working_collection.id}</b>) per tables below"
+      note "Please transfer <b>#{transfer_vol} #{MICROLITERS}</b> " \
+              "from stock plate (<b>ID:#{input_collection.id}</b>) " \
+              " to working plate (<b>ID:#{working_collection.id}</b>) per tables below"
       separator
       note "Stock Plate (ID: <b>#{input_collection.id}</b>):"
       table highlight_collection_rcx(input_collection, input_row_column_location, check: false)
@@ -79,8 +80,8 @@ module CollectionTransfer
   # @param transfer_vol [Integer] volume in ul of sample to transfer
   def transfer_subsamples_to_working_plate(input_fv_array, working_plate, transfer_vol)
     # was transfer_to_collection_from_fv_array
-    sample_array_by_collection = input_fv_array.group_by { |fv| fv.collection }
-    sample_array_by_collection.each do |input_collection, fv_array|
+    samples_by_collection = input_fv_array.group_by { |fv| fv.collection }
+    samples_by_collection.each do |input_collection, fv_array|
       sample_array = fv_array.map { |fv| fv.sample }
       transfer_to_working_plate(input_collection, working_plate, transfer_vol, array_of_samples: sample_array)
     end
@@ -106,32 +107,32 @@ module CollectionTransfer
     return true if get_num_plates(operations, role) > 1
   end
 
-  # gets the number of plates
+  # Gets the number of plates
   #
   # @param operations [OperationList] list of operations in job
   # @param role [String] indicates whether it's an input or output collection
-  # @returns [Int] the number of plates
+  # @returns [Integer] the number of plates
   def get_num_plates(operations, role)
     get_array_of_collections(operations, role).length
   end
 
-  # gets the number of plates
+  # Creates an array of unique collections
   #
   # @param operations [OperationList] list of operations in job
   # @param role [String] indicates whether it's an input or output collection
-  # @returns Array[collection] the number of plates
+  # @returns Array[Collection] an array of Collecitons
   def get_array_of_collections(operations, role)
-    collection_array = []
+    collections = []
     operations.each do |op|
       obj_array = op.inputs if role == 'input'
       obj_array = op.outputs if role == 'output'
       obj_array.each do |fv|
-        if fv.collection != nil
-          collection_array.push(fv.collection)
+        if fv.collection.nil?
+          collections.push(fv.collection)
         end
       end
     end
-    collection_array.uniq
+    collections.uniq
   end
 
   # Creates Data Association between working plate items and input items

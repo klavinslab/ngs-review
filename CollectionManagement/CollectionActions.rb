@@ -26,8 +26,9 @@ module CollectionActions
   def store_output_collections(operations, location: nil)
     show do
       title 'Put Away the Following Items'
-      table table_of_job_object_location(operations, role: 'output',
-              location: location)
+      table table_of_job_object_location( operations, 
+                                          role: 'output',
+                                          location: location)
     end
   end
 
@@ -39,10 +40,11 @@ module CollectionActions
   def table_of_job_object_location(operations, role: 'input', location: nil)
     obj_array = []
     operations.each do |op|
-      array_of_fv = op.inputs.reject { |fv|
-              fv.collection.nil? } if role == 'input'
-      array_of_fv = op.outputs.reject { |fv|
-              fv.collection.nil? } if role == 'output'
+      if role == 'input'
+        array_of_fv = op.inputs.reject { |fv| fv.collection.nil? }
+      else
+        array_of_fv = op.outputs.reject { |fv| fv.collection.nil? }
+      end
       obj_array.concat(get_obj_from_fv_array(array_of_fv))
     end
     obj_array = obj_array.uniq
@@ -50,7 +52,7 @@ module CollectionActions
     get_collection_locations(obj_array)
   end
 
-  # Get the obj from the fv (either item or collection)
+  # Get the obj from the field value (either item or collection)
   #
   # @param array_of_fv [Array] array of field values
   # @return obj_array [Array] array of objects (either collections or items)

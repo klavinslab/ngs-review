@@ -45,7 +45,7 @@ class Protocol
 
     col_parts_hash.each do |collection, parts|
       show do
-        title "Collkectiuon and parts"
+        title "Collection and parts"
         note "collection id: #{collection.id}"
         parts.each do |part|
           note "Part ID: #{part.id}"

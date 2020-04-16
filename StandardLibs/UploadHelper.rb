@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# helper function for uploading files
-# note: data associations should be handled externally
+# Helper functions for uploading files
+# Note: data associations should be handled externally
 module UploadHelper
 
   require 'csv'
@@ -9,58 +9,59 @@ module UploadHelper
 
   CSV_KEY = 'upload_csv'
 
+  # @param dirname [String] the directory where files are located, or
+  # the full path including filename
+  # @param expected_uploads [Integer] the number of files to upload
+  # @param tries [Integer] the maximum number of attempts to upload
+  # the files
   #
-  # @param dirname - directory where files are located, or full path including filename
-  # @param exp_upload_num - expected number of files to upload
-  # @param tries - max. number of attempts to upload expectedNum files
-  #
-  # @returns array of Upload items
+  # @returns [Array] the Upload items
   #
   # EXAMPLES of how to associate correctly:
   # data associations - 1st gel image
   # up_bef=ups[0]
-  # op.plan.associate 'gel_image_bef', 'combined gel fragment', up_bef  # upload association, link
-  # op.input(INPUT).item.associate 'gel_image_bef', up_bef              # regular association
-  # op.output(OUTPUT).item.associate 'gel_image_bef', up_bef            # regular association
-  #------------------------------------------
-  def upload_data(dirname, exp_upload_num, tries)
+  # op.plan.associate 'gel_image_bef', 'combined gel fragment', up_bef
+  # upload association, link
+  # op.input(INPUT).item.associate 'gel_image_bef', up_bef
+  # regular association
+  # op.output(OUTPUT).item.associate 'gel_image_bef', up_bef
+  # regular association
+  def upload_data(dirname, expected_uploads, tries)
     uploads = {} # result of upload block
     number_of_uploads = 0 # number of uploads in current attempt
     attempt = 0 # number of upload attempts
 
     loop do
-      # if(number_of_uploads==exp_upload_num)
+      # if(number_of_uploads==expected_uploads)
       # show {note 'Upload complete.'}
       # end
-      break if (attempt >= tries) || (number_of_uploads == exp_upload_num)
+      break if (attempt >= tries) || (number_of_uploads == expected_uploads)
 
       attempt += 1
 
       uploads = show do
-        title "Select <b>#{exp_upload_num}</b> file(s)"
+        title "Select <b>#{expected_uploads}</b> file(s)"
         note "File(s) location is: #{dirname}"
         if attempt > 1
           warning "Number of uploaded files (#{number_of_uploads}) was incorrect, please try again! (Attempt #{attempt} of #{tries})"
         end
         upload var: 'files'
       end
-      # number of uploads
-      if !uploads[:files].nil?
+      unless uploads[:files].nil?
         number_of_uploads = uploads[:files].length
       end
     end
 
-    if number_of_uploads != exp_upload_num
-      show {note "Final number of uploads (#{number_of_uploads}) not equal to expected number #{exp_upload_num}! Please check."}
+    if number_of_uploads != expected_uploads
+      show { note "Final number of uploads (#{number_of_uploads}) not equal to expected number #{expected_uploads}! Please check." }
       return nil
     end
 
     # format uploads before returning
-    ups = [] # upload hashes
-    if !uploads[:files].nil?
-      uploads[:files].each_with_index do |upload_hash, ii|
-        up = Upload.find(upload_hash[:id])
-        ups[ii] = up
+    uploaded_hashes = []
+    unless uploads[:files].nil?
+      uploads[:files].each_with_index do |upload_hash, idx|
+        uploaded_hashes[idx] = Upload.find(upload_hash[:id])
       end
     end
     ups
@@ -69,7 +70,7 @@ module UploadHelper
   # Opens .csv file upload item using its url and stores it line by line in a matrix
   #
   # @param upload [upload_obj] the file that you wish to read from
-  # @return matrix [2D-Array] is the array of arrays of the rows read from file, if csv
+  # @return matrix [Array] the 2D array of the rows read from file, if csv
   def read_url(upload)
     url = upload.url
     matrix = []
@@ -79,10 +80,10 @@ module UploadHelper
 
   # Validates upload and ensures that it is correct
   #
-  # @param uplaod_array Array array of  uploads
-  # @param expected_num_inputs int the expected number of inputs
-  # @param csv_headers array array of expected headers
-  # @returns pass Boolean pass or fail (true is pass)
+  # @param uplaod_array [Array] array of uploads
+  # @param expected_num_inputs [Integer] the expected number of inputs
+  # @param csv_headers [Array] number of headers expected
+  # @returns pass [Boolean]
   def validate_upload(upload_array, expected_num_inputs, csv_headers, multiple_files: true)
     if upload_array.nil?
       show do
@@ -94,8 +95,8 @@ module UploadHelper
 
     fail_message = ''
 
-    if multiple_files == false
-      fail_message += 'More than one file was uploaded, ' if upload_array.length > 1
+    if multiple_files == false && upload_array.length > 1
+      fail_message += 'More than one file was uploaded, '
       upload = upload_array.first
     end
 
@@ -112,18 +113,23 @@ module UploadHelper
         is in wrong format, " if !first_row.include?(header)
     end
 
-    if fail_message.length > 0
-      show do
-        title 'Warning Uploaded CSV does not fit correct format'
-        note "#{fail_message}"
-      end
-      return false
-    else
+    if fail_message.empty?
       return true
     end
+
+    show do
+      title 'Warning Uploaded CSV does not fit correct format'
+      note fail_message.to_s
+    end
+    return false
   end
 
-  # Needs documentation
+  # Attempt to upload a CSV
+  #
+  # @param expected_data_points [Integer]
+  # @param headers
+  # @param multi_files
+  # @param file_location
   def get_validated_uploads(expected_data_points, headers, multi_files, file_location: 'Unknown Location')
     tries = 1
     max_tries = 10
@@ -138,12 +144,16 @@ module UploadHelper
   end
 
   # Instructions to upload CSV files of concentrations
-  def upload_csv(tries = nil, max_tries = 'NA', file_location: 'Unknown Location')
-    up_csv = show do
+  #
+  # @param tries [Integer]
+  # @param max_tries [String]
+  # @param file_location [String]
+  def upload_csv(tries: nil, max_tries: 'NA', file_location: 'Unknown Location')
+    upload_csv = show do
       title "Upload CSV (attempts: #{tries}/#{max_tries})"
-      note "Please upload a <b>CSV</b> file located at #{file_location}"
+      note "Please upload the <b>CSV</b> file located at #{file_location}"
       upload var: CSV_KEY.to_sym
     end
-    up_csv.get_response(CSV_KEY.to_sym)
+    upload_csv.get_response(CSV_KEY.to_sym)
   end
 end

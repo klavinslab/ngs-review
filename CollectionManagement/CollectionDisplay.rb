@@ -48,8 +48,10 @@ module CollectionDisplay
   #     x = string
   # @return [table]
   def highlight_rcx(table, rcx_list, check: true)
-    raise "Passed Collection when Table needed.  You may want to use
-          'highlight_collection_rcx' instead" if table.class == 'Collection'
+    if table.class == 'Collection'
+      raise "Passed Collection when Table needed.
+              You may want to use 'highlight_collection_rcx' instead"
+    end
     rcx_list.each do |rcx|
       rcx.push(check)
     end
@@ -95,12 +97,12 @@ module CollectionDisplay
   # @param rc_list [Array] array of rc [[row,col],...]
   #                       row = int
   #                       col = int
-  # @param check [Boolean] wheather cells should be Checkable
+  # @param check [Boolean] whether cells should be Checkable
   # @param &rc_block [Block] to determine rc list
   # @return [Table]
   def highlight_rc(table, rc_list, check: true, &rc_block)
     rcx_list = rc_list.map { |r, c|
-      block_given? ? [r, c, yield(r, c)] : [r, c, ""]
+      block_given? ? [r, c, yield(r, c)] : [r, c, '']
     }
     highlight_rcx(table, rcx_list, check: check)
   end
@@ -116,7 +118,7 @@ module CollectionDisplay
   # @return [Table]
   def highlight_collection_rc(collection, rc_list,  check: true, &rc_block)
     rcx_list = rc_list.map { |r, c|
-      block_given? ? [r, c, yield(r, c)] : [r, c, ""]
+      block_given? ? [r, c, yield(r, c)] : [r, c, '']
     }
     highlight_collection_rcx(collection, rcx_list, check: check)
   end
