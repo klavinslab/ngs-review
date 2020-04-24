@@ -47,7 +47,7 @@ module CollectionActions
     end
     obj_array = obj_array.uniq
     set_locations(obj_array, location) unless location.nil?
-    get_collection_locations(obj_array)
+    get_collection_location_table(obj_array)
   end
 
   # Get the obj from the fv (either item or collection)
@@ -84,7 +84,7 @@ module CollectionActions
   #
   # @param collection [Collection] the collection that is to be put away
   # @return location_table [Array<Array>] of collections and their locations
-  def get_collection_locations(obj_array)
+  def get_collection_location_table(obj_array)
     location_table = [['ID', 'Collection Type', 'Location']]
     obj_array.each do |obj|
       location_table.push([obj.id, obj.object_type.name, obj.location])
@@ -102,7 +102,7 @@ module CollectionActions
       title 'Put Away the Following Items'
       if obj_item.class != Array
         set_locations([obj_item], location) if location.nil?
-        table get_collection_locations([obj_item])
+        table get_collection_location_table([obj_item])
       else
         set_locations(obj_item, location) if location.nil?
         table get_item_location(obj_item)
@@ -143,6 +143,21 @@ module CollectionActions
     working_plate = Collection.new_collection(c_type)
     get_and_label_new_plate(working_plate) if label_plate
     working_plate
+  end
+
+  # Replaces operations.make
+  # Ensures that all items in fv_array
+  # remain together in one collection
+  # the collection must already have the samples set in the collection
+  #
+  # @param fv_array [Array<Field Values>] array of field values
+  # @param collection [Collection] the destination collection
+  # replaced make_output_plate
+  def associate_field_values_to_plate(fv_array, collection)
+    output_fv_array.each do |fv|
+      r_c = collection.find(fv.sample).first
+      fv.set(collection: collection, row: r_c[0], column: r_c[1]) unless r_c.first.nil?
+    end
   end
 
   # Instructions on getting and labeling new plate

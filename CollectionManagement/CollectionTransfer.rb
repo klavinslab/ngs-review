@@ -9,91 +9,244 @@
 # TODO: Item --> collection and collection --> item transfers.
 # (not applicable for current project so not added)
 needs 'Standard Libs/Units'
-needs 'CollectionManagement/SampleManagement'
+needs 'Standard Libs/Debug'
+needs 'Standard Libs/AssociationManagement'
+needs 'Collection_Management/CollectionLocation'
 
 module CollectionTransfer
 
   include Units
-  include SampleManagement
+  include Debug
+  include CollectionLocation
+  include AssociationManagement
+  include PartProvenance
 
-  # Provides instructions to transfer samples
+  TO_LOC = "To Loc".to_sym
+  FROM_LOC = "From Loc".to_sym
+
+  
+  # Provides instructions to transfer samples.  If samples to transfer are not given then it will assume that all
+  # parts of the from_collection will be transfered.
   #
   # @param input_collection [Collection] the collection samples come from
-  # @param working_collection [Collection] the collection samples will move to
+  # @param to_collection[Collection] the collection samples will move to
   # @param transfer_vol [Integer] volume of sample to transfer (in ul)
-  #
   # @param array_of_samples [Array<Sample>] Optional
-  # an Array of samples to be transferred
-  # if blank then all samples will be transfered
-  # QUESTION -- what happens here if array_of_sampels is NOT nil?
-  # or -- that is -- is it clear somewhere what you'd do to create the array?
+  #  
+  # TODO Below
   # This should really be three methods:
   # 1. get the item locations
-  # 2. make Data associations
-  # 3. give instructions
-  def transfer_to_working_plate(input_collection, working_collection, transfer_vol, array_of_samples: nil)
+  # 2. make Data associations  (done)
+  # 3. give instructions  (done)
+  def transfer_to_new_collection(from_collection, to_collection, transfer_vol, array_of_samples: nil)
+
+
+    #gets samples to transfer if not explicitly given
     if array_of_samples.nil?
-      array_of_samples = input_collection.parts.map { |part| part.sample if part.class != 'Sample' }
-    end
-    input_row_column_location = []
-    output_row_column_location = []
-    array_of_samples.each do |sample|
-      input_locations = get_item_sample_location(input_collection, sample)
-      # 2d array [[0, 0], [1, 1]]
-      input_sample_location = get_alpha_num_location(input_collection, sample)
-      # string "A1, B2"
-      output_locations = get_item_sample_location(working_collection, sample)
-      output_sample_location = get_alpha_num_location(input_collection, sample)
-
-      input_locations.each do |coordinates|
-        coordinates.push(input_sample_location) # [0,0,A1]
-        input_row_column_location.push(coordinates)
-      end
-
-      output_locations.each do |coordinates|
-        coordinates.push(output_sample_location)
-        output_row_column_location.push(coordinates)
-      end
+      array_of_samples = from_collection.parts.map { |part| part.sample if part.class != 'Sample' }
     end
 
-    associate_plate_to_plate(working_collection, input_collection, 'Input Plate', 'Input Item')
+    add_samples_to_collection(array_of_samples, to_collection)
+    
 
-    show do
-      title 'Transfer from Stock Plate to Working Plate'
-      note "Please transfer <b>#{transfer_vol} #{MICROLITERS}</b> from stock plate (<b>ID:#{input_collection.id}</b>) to working
-                                plate (<b>ID:#{working_collection.id}</b>) per tables below"
-      separator
-      note "Stock Plate (ID: <b>#{input_collection.id}</b>):"
-      table highlight_collection_rcx(input_collection, input_row_column_location, check: false)
-      note "Working Plate (ID: <b>#{working_collection}</b>):"
-      table highlight_collection_rcx(working_collection, output_row_column_location, check: false)
+    association_map = make_one_to_many_association_map(to_collection: to_collection, 
+                                from_collection: from_collection, samples: array_of_samples)
+    
+    
+    associate_plate_to_plate(to_collection: to_collection, from_collection: from_collection,
+                               association_map: association_map)
+    collection_transfer_instructions(to_collection: to_collection, from_collection: from_collection,
+                                      association_map: association_map, transfer_vol: transfer_vol)
+  end
+
+  # makes proper association_map between to_collection and from_collection for use in other methods
+  # all samples in samples: must exist in both collections.  This method only works if the sample
+  # exists in the from_collection exactly 1 time.  If the sample exists in the from_collection more
+  # than one time then it is impossible to know with the information given which well the end sample came
+  # from (unless its a one to one location match)
+  #
+  # @param to_collection [Collection] the collection that things are moving to
+  # @param from_collection [Collection] the collection that things are coming from
+  # @param samples [Array<{to_loc: loc, from_loc: loc}>] array of samples that exists in both collections 
+  # @param one_to_one [Boolean] if true then will make an exact one to one location map from the to_collection
+  # (if not given then will assume all similar samples are being associated)
+  def make_one_to_many_association_map(to_collection:, from_collection:, samples: nil, one_to_one: false)
+    return one_to_one_association_map(to_collectiion: to_collection, from_collection: from_collection) if one_to_one
+    if samples.nil?
+      samples = find_like_samples(to_collection, from_collection)
+    end
+    # Array<{to_loc: loc, from_loc: loc}
+    association_map = []
+    samples_with_no_location = []
+
+    samples.each do |sample|
+
+      to_loc = to_collection.find(sample)
+      from_loc = from_collection.find(sample)
+      #TODO figure out how the associations will work if there are multiple 
+      # to and from locations (works partially may could use improvement)
+
+      if to_loc.length == 0 || from_loc == 0
+        samples_with_no_location.push(sample)
+      end
+
+      if from_loc.length == 1
+        to_loc.each do |t_loc|
+          association_map.push({TO_LOC: t_loc, FROM_LOC: from_loc.first})
+        end
+      else
+        from_loc.each do |from_loc|
+          match = false
+          to_loc.each do |to_loc|
+            if to_loc[0] == from_loc[0] && to_loc[1] == from_loc[1]
+              match = true
+              association_map.push({TO_LOC: to_loc, FROM_LOC: from_loc})
+            end
+          end
+          raise "AssociationMap was not properly created.  There were multiple possible from locations and none of 
+                these locations exactly matched to locations.  Please contact Cannon Mallory for assistance
+              or explore 'CollectionManagement/CollectionTransfer/make_association_map 
+              to recify the situation." unless match
+              # TODO Create a better error handle here (make it so it shows them the issue more explicitly)
+        end
+      end
+    end
+
+    unless samples_with_no_location.length == 0
+      cancel_plan = show do 
+        title "Some Samples were not found"
+        warning "Some samples there were expected were not found in the given plates"
+        note "The samples that could not be found are listed below"
+        select ["Cancel", "Continue" ], var: "cancel", label: "Do you want to cancel the plan?", default: 1
+        samples_with_no_location.each do |sample|
+          note "#{sample.id}"
+        end
+      end
+
+      #TODO Fail softly/continue with samples that were found
+      if cancel_plan[:"cancel"] == "Cancel"
+        raise "User Canceled plan because many samples could not be found"
+      else
+        raise "I am sorry this module doesn't currently support continuing with existing samples
+          hopefully this feature will be added soon."
+      end
+    end
+
+    association_map
+  end
+
+  # Creates a one to one association map for all filled slots of both to and from collection
+  # if a slot is full in both collections that location is included in the association map
+  # regardless if the samples are the same or not, Collections must be the same demensions
+  #
+  # @param to_collection [Collection] the collection that things are moving to
+  # @param from_collection [Collection] the collection that things are coming from
+  # @param samples [Array<{to_loc: loc, from_loc: loc}>] array of samples that exists in both collections 
+  def one_to_one_association_map(to_collection:, from_collection:)
+    to_row_dem, to_col_dem = to_collections.demensions
+    from_row_dem, from_col_dem = from_collections.demensions
+    raise "Collection Demensions do not match" unless to_row_dem == from_row_dem && to_col_dem == from_col_dem
+    association_map = []
+    to_row_dem.times do |row|
+      to_col_dem.times do |col|
+        unless to_collection.part(row,col).nil? || from_collection.part(row,col).nil?
+          loc = [row,col]
+          association_map.push({TO_LOC: loc, FROM_LOC: loc})
+        end
+      end
     end
   end
 
-  # Instructions to transfer physical samples from input plates to working_plates
+  #returns an array of all samples that are the same in both collections
+  #
+  # @param collection_a [Collection] a collection
+  # @param collection_b [Collection] a collection
+  # @return [Array<Sample>]
+  def find_like_samples(collection_a, collection_b)
+    samples_a = collection_a.parts.map!{|part| part.sample}
+    samples_b = collection_b.parts.map!{|part| part.sample}
+    samples_a & samples_b
+  end
+
+  # provides instructions to technition for transfering items from one collection to another
+  # 
+  # @param to_collection [Collection] the collection that items are being transfered to
+  # @param from_collection [Collection] the collection that items are being transered from
+  # @param association_map [Array<{TO_LOC: loc, FROM_LOC: loc}] maps the location relationship
+  #     between the two plates.  If not given will assume one to one collection transfer
+  # @param transfer_vol [Double] Optional the volume to be transfered 
+  #       (if nil no volume instructions)
+  def collection_transfer_instructions(to_collection:, from_collection:, 
+                  association_map: nil, transfer_vol: nil)
+    if transfer_vol.nil?
+      amount_to_transfer = "everything"
+    else
+      amount_to_transfer = "#{transfer_vol} #{MICROLITERS}"
+    end
+
+    association_map = one_to_one_association_map(to_collection: to_collection,
+          from_collection: from_collection) if association_map.nil?
+
+    
+    input_rcx = []
+    output_rcx = []
+    association_map.each do |loc_hash|
+      input_location = loc_hash[:FROM_LOC]
+      output_location = loc_hash[:TO_LOC]
+
+      input_alpha_loc = convert_rc_to_alpha(output_location)
+      input_rcx.push(input_location.push(input_alpha_loc))
+      output_rcx.push(output_location.push(input_alpha_loc))
+    end
+
+    show do
+      title 'Transfer from one plate to another'
+      note "Please transfer <b>#{amount_to_transfer}</b> from Plate
+           (<b>ID:#{from_collection.id}</b>) to plate 
+           (<b>ID:#{to_collection.id}</b>) per tables below"
+      separator
+      note "Stock Plate (ID: <b>#{from_collection.id}</b>):"
+      table highlight_collection_rcx(from_collection, input_rcx,
+          check: false)
+      note "Working Plate (ID: <b>#{to_collection}</b>):"
+      table highlight_collection_rcx(to_collection, output_rcx,
+          check: false)
+    end
+  end
+
+  # Instructions to transfer physical samples from input plates to to_collections
   # Groups samples by collection for easier transfer
-  # Uses transfer_to_working_plate method
+  # Uses transfer_to_to_collection method
   #
   # @param input_fv_array [Array<FieldValues>] an array of field values of collections
-  # @param working_plate [Collection] (Should have samples already associated to it)
+  # @param to_collection [Collection] (Should have samples already associated to it)
   # @param transfer_vol [Integer] volume in ul of sample to transfer
-  def transfer_subsamples_to_working_plate(input_fv_array, working_plate, transfer_vol)
+  def transfer_subsamples_to_working_plate(input_fv_array, to_collection, transfer_vol)
     # was transfer_to_collection_from_fv_array
     sample_array_by_collection = input_fv_array.group_by { |fv| fv.collection }
-    sample_array_by_collection.each do |input_collection, fv_array|
+    sample_array_by_collection.each do |from_collection, fv_array|
       sample_array = fv_array.map { |fv| fv.sample }
-      transfer_to_working_plate(input_collection, working_plate, transfer_vol, array_of_samples: sample_array)
+      transfer_to_new_collection(from_collection, to_collection, transfer_vol, array_of_samples: sample_array)
     end
   end
 
   # Instructions on relabeling plates to new plate ID
+  # Tracks provenance properly though transfer
   #
   # @param plate1 [Collection] plate to relabel
   # @param plate2 [Collection] new plate label
-  def relabel_plate(plate1, plate2)
+  def relabel_plate(from_collection, to_collection)
+    to_col_map = AssociationMap.new(to_collection)
+    from_col_map = AssocaitionMap.new(from_collection)
+    
+    to_collection.associate(plate_key, input_plate)
+    add_provenance(from: from_collection, from_map: from_col_map,
+                    to: to_collection, to_map: to_col_map)
+    to_col_map.save
+    from_col_map.save
     show do
       title 'Rename Plate'
-      note "Relabel plate <b>#{plate1.id}</b> with <b>#{plate2.id}</b>"
+      note "Relabel plate <b>#{from_collection.id}</b> with <b>#{to_collection.id}</b>"
     end
   end
 
@@ -134,19 +287,111 @@ module CollectionTransfer
     collection_array.uniq
   end
 
+
+  # Assigns samples to specific well locations, they are added in order of the list
+  #
+  # @param samples [Array<FieldValue>] or [Array<Samples>]
+  # @param to_collection [Collection]
+  # @param add_row_wise [Boolean] default true will add samples by column and not row
+  # @raise if not enough space in collection
+  def add_samples_to_collection(samples, to_collection, add_column_wise: true)
+    samples.map! { |fv| fv = fv.sample } if samples.first.is_a? FieldValue
+    slots_left = to_collection.get_empty.length
+    raise 'Not enough space in in collection for all samples' if samples.length > slots_left
+
+    if add_column_wise
+      add_samples_column_wise(samples, to_collection)
+    else
+      to_collection.add_samples(samples)
+    end
+  end
+
+  # Adds samples to the first slot in the first available colum 
+  # as apposed to column wise that the base version does.
+  #
+  # @param samples_to_add [Array<Samples>] an array of samples
+  # @param collection [Collection] the collection to include samples
+  def add_samples_column_wise(samples_to_add, collection)
+    col_matrix = collection.matrix
+    collumns = col_matrix.first.size
+    rows = col_matrix.size
+    samples_to_add.each do |sample|
+      break_patern = false
+      collumns.times do |col|
+        rows.times do |row|
+            if collection.part(row, col).nil?
+                collection.set(row,col, sample)
+                break_patern = true
+                break
+            end
+        end
+        break if break_patern
+      end
+    end
+  end
+
   # Creates Data Association between working plate items and input items
   # Associates corrosponding well locations that contain a part.
   #
-  # @param working_plate [Collection] the plate that is getting the association
+  # @param to_collection [Collection] the plate that is getting the association
   # @param input_plate [Collection] the plate that is transfering the association
-  # @param plate_key [String] "input plate"
-  # @param item_key [String] "input item"
-  def associate_plate_to_plate(working_plate, input_plate, plate_key, item_key)
-    working_plate.associate(plate_key, input_plate)
-    input_parts = input_plate.parts
-    working_parts = working_plate.parts
-    working_parts.each_with_index do |part, idx|
-      part.associate(item_key, input_parts[idx])
+  # @param samples [Array<Samples>] array of samples that are to be associated over
+  #   if nil then will associate all common samples
+  def associate_plate_to_plate(to_collection:, from_collection:, association_map: nil)
+    # map = [[loc1_to, loc2_from], [loc1,loc2], [loc1, loc2]]
+
+    #if there is no association map given it will assume they came one to one
+    # and will build association map of right format based on how many items are
+    # in the "to_collection"
+    if association_map.nil?
+      association_map = one_to_one_association_map(to_collection: to_collection,
+                                            from_colleciton: from_collection)
+    end
+
+    from_obj_to_obj_provenance(to_collection, from_collection)
+
+    
+    
+    association_map.each do |loc_hash|
+
+      to_loc = loc_hash[:TO_LOC]
+      from_loc = loc_hash[:FROM_LOC]
+
+      to_loc = convert_alpha_to_rc(to_loc) if to_loc.is_a? String
+      from_loc = convert_alpha_to_rc(from_loc) if from_loc.is_a? String
+
+      to_part = to_collection.part(to_loc[0],to_loc[1])
+      from_part = from_collection.part(from_loc[0], from_loc[1])
+
+      from_obj_to_obj_provenance(to_part, from_part)
     end
   end
+
+
+  # Adds provenence historuy to to_object from from_object
+  #
+  # @param from_obj [Krill Object] object that provenance is coming from
+  # @param to_obj [Krill Object] the object that provenance is going to
+  def from_obj_to_obj_provenance(to_obj, from_obj)
+    from_obj_map = AssociationMap.new(from_obj)
+    to_obj_map = AssociationMap.new(to_obj)
+    add_provenance(from: from_obj, from_map: from_obj_map,
+                    to: to_obj, to_map: to_obj_map)
+    from_obj_map.save
+    to_obj_map.save
+  end
+
+  # gives an array of parts in the collection that match the right sample
+  #
+  # @param collection [Collection] the collecton that the part exists in
+  # @param sample [Sample] the sample searched for
+  def parts_from_sample(collection, sample)
+    part_loc = collection.find(sample)
+    parts = []
+    part_loc.each do |r_c|
+      parts.push(collection.part(r_c[0], r_c[1]))
+    end
+    parts
+  end
+
 end

@@ -12,7 +12,7 @@ needs 'Standard Libs/UploadHelper'
 needs 'Collection_Management/CollectionDisplay'
 needs 'Collection_Management/CollectionTransfer'
 needs 'Collection_Management/CollectionActions'
-needs 'Collection_Management/SampleManagement'
+needs 'Collection_Management/CollectionLocation'
 needs 'RNA_Seq/WorkflowValidation'
 needs 'RNA_Seq/KeywordLib'
 needs 'RNA_Seq/CsvDebugLib'
@@ -23,7 +23,7 @@ class Protocol
   include Debug
   include CollectionDisplay
   include CollectionTransfer
-  include SampleManagement
+  include CollectionLocation
   include WorkflowValidation
   include CommonInputOutputNames
   include KeywordLib
@@ -41,20 +41,19 @@ class Protocol
 
     validate_inputs(operations, inputs_match_outputs: true)
     validate_concentrations(operations, CONC_RANGE)
-
-    working_plate = make_new_plate(COLLECTION_TYPE)
     operations.retrieve
 
+    working_plate = make_new_plate(COLLECTION_TYPE)
     operations.each do |op|
       input_fv_array = op.input_array(INPUT_ARRAY)
       output_fv_array = op.output_array(OUTPUT_ARRAY)
-      add_samples_to_collection(input_fv_array, working_plate)
-      make_output_plate(output_fv_array, working_plate)
+      associate_field_values_to_plate(output_fv_array, working_plate)
       transfer_subsamples_to_working_plate(input_fv_array, working_plate, TRANSFER_VOL)
     end
 
     adapter_plate = make_adapter_plate(working_plate.parts.length)
-    associate_plate_to_plate(working_plate, adapter_plate, ADAPTER_PLATE, ADAPTER)
+    associate_plate_to_plate(working_plate, adapter_plate)
+
     store_input_collections(operations)
     rna_prep_steps(working_plate)
     store_output_collections(operations, location: 'Freezer')

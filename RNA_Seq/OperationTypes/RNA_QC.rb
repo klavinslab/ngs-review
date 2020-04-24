@@ -12,7 +12,7 @@ needs 'Standard Libs/UploadHelper'
 needs 'Collection_Management/CollectionDisplay'
 needs 'Collection_Management/CollectionTransfer'
 needs 'Collection_Management/CollectionActions'
-needs 'Collection_Management/SampleManagement'
+needs 'Collection_Management/CollectionLocation'
 needs 'RNA_Seq/WorkflowValidation'
 needs 'RNA_Seq/KeywordLib'
 
@@ -23,7 +23,7 @@ class Protocol
   include CommonInputOutputNames
   include Debug
   include KeywordLib
-  include SampleManagement
+  include CollectionLocation
   include Units
   include UploadHelper
   include WorkflowValidation
@@ -40,10 +40,7 @@ class Protocol
 
     operations.each do |op|
       input_field_value_array = op.input_array(INPUT_ARRAY)
-      add_samples_to_collection(input_field_value_array, working_plate)
-      # renamed from add_fv_array_samples_to_collection in sample management
       transfer_subsamples_to_working_plate(input_field_value_array, working_plate, TRANSFER_VOL)
-      # renamed from transfer to collection from fv array in Collection Transfer
     end
 
     store_input_collections(operations)
@@ -103,7 +100,7 @@ class Protocol
       end
     end
     show do
-      title 'Measurements Taken'
+      title 'Measurements Take'
       note 'Recorded Concentrations are listed below'
       table highlight_collection_rcx(working_plate, rcx_array, check: false)
     end

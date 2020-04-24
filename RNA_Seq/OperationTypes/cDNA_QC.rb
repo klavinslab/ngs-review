@@ -13,7 +13,7 @@ needs 'Standard Libs/Units'
 needs 'Collection_Management/CollectionDisplay'
 needs 'Collection_Management/CollectionTransfer'
 needs 'Collection_Management/CollectionActions'
-needs 'Collection_Management/SampleManagement'
+needs 'Collection_Management/CollectionLocation'
 needs 'RNA_Seq/WorkflowValidation'
 needs 'RNA_Seq/KeywordLib'
 
@@ -24,7 +24,7 @@ class Protocol
   include CommonInputOutputNames
   include KeywordLib
   include Debug
-  include SampleManagement
+  include CollectionLocation
   include WorkflowValidation
 
   TRANSFER_VOL = 20 # volume of sample to be transfered in ul
@@ -37,8 +37,7 @@ class Protocol
     operations.retrieve
 
     operations.each do |op|
-      input_fv_array = op.input_array(INPUT_ARRAY)
-      add_samples_to_collection(input_fv_array, working_plate)
+      input_field_value_array = op.input_array(INPUT_ARRAY)
       transfer_subsamples_to_working_plate(input_fv_array, working_plate, TRANSFER_VOL)
     end
 

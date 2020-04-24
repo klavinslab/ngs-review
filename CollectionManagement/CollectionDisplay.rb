@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+#TODO With the added boardered need to ensure that they don't land under the checkable range if checkable is true
 
 # Justin Vrana
 #
@@ -16,14 +16,55 @@ module CollectionDisplay
   # Creates a table with the same dimensions as the input collection
   #
   # @param collection [Collection] the collection to be represented by the table
+  # @param add_headers [Boolean] optional True
   def create_collection_table(collection)
-    size = collection.object_type.rows * collection.object_type.columns
-    slots = (1..size).to_a
-    slots.each_slice(collection.object_type.columns).map do |row|
-      row.map do |col|
-        { content: col, class: 'td-empty-slot' }
+    tab = nil
+    rows = collection.object_type.rows
+    columns = collection.object_type.columns
+    size = rows * columns
+    slots = (1..size+rows+columns+1).to_a #gotta add spots for labels plus one square for upper left corner
+    tab = slots.each_slice(collection.object_type.columns+1).map.with_index do |row|
+      row.map do |col, col_idx|
+        {class: 'td-empty-slot' }
       end
     end
+
+    labels = Array(1...size+1)
+    tab.each_with_index do |row, row_idx|
+       row.each_with_index do |col, col_idx|
+          if row_idx == 0
+            col[:content] = "<b><u>#{col_idx}</u></b>"
+          elsif col_idx == 0
+            col[:content] = "<b><u>#{get_alpha(row_idx)}</u></b>"
+          else
+            col[:content] = labels.first
+            labels = labels.drop(1)
+          end
+       end
+    end
+    tab.first.first[:content] = "<b>:)</b>"
+    tab
+  end
+  
+  #turns numbers in top alpha values (eg 1->A 27-AA etc)
+  #
+  # @param num [Int] the integer to be turned
+  def get_alpha(num)
+    alpha = ("A"..."AA").to_a
+    number_parts = []
+    iterations = 0
+    until num/26 == 0 || num == 26 || iterations == 20
+        div_parts = num.divmod(26)
+        number_parts.push(div_parts[1])
+        num = div_parts[0]
+        iterations += 1
+    end
+    number_parts.push(num%26)
+    alpha_string = ""
+    number_parts.reverse_each do |let|
+       alpha_string += alpha[let-1]
+    end
+    alpha_string
   end
 
   # Highlights a specific location in a table (TODO TABLE CLASS)
@@ -35,7 +76,7 @@ module CollectionDisplay
   #                    (TODO EMPTY STRING/DONT REPLACE CONTENT)
   # @param check [Boolean] optional determines if cell is checkable or not
   def highlight_cell(tbl, row, col, id, check: true)
-    tbl[row][col] = { content: id, class: 'td-filled-slot', check: check }
+    tbl[row+1][col+1] = { content: id, class: 'td-filled-slot', check: check }
   end
 
   # Highlights all cells in ROW/COLUMN/X  (TODO TABLE CLASS)
@@ -167,14 +208,30 @@ module CollectionDisplay
   #
   # @param collection [Collection] the collection that the table is based from
   def create_alpha_numeric_table(collection)
-    size = collection.object_type.rows * collection.object_type.columns
-    slots = (1..size).to_a
-    alpha_r = ('A'..'H').to_a
+    rows = collection.object_type.rows
+    columns = collection.object_type.columns
+    size = rows * columns
+    slots = (1..size+rows+columns+1).to_a
     slots.each_slice(collection.object_type.columns).each_with_index.map do |row, r_idx|
       row.each_with_index.map do |col, c_idx|
-        { content: "#{alpha_r[r_idx]}#{c_idx + 1}", class: 'td-empty-slot' }
+        {class: 'td-empty-slot' }
       end
     end
+    labels = Array(1...size+1)
+    tab.each_with_index do |row, row_idx|
+       row.each_with_index do |col, col_idx|
+        if row_idx == 0
+          col[:content] = "<b><u>#{col_idx}</u></b>"
+        elsif col_idx == 0
+          col[:content] = "<b><u>#{get_alpha(row_idx)}</u></b>"
+        else
+          col[:content] = labels.first
+          labels = labels.drop(1)
+        end
+     end
+  end
+  tab.first.first[:content] = "<b>:)</b>"
+  tab
   end
 
   # Makes an alpha numerical display of collection wells listed in rc_list
