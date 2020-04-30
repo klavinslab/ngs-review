@@ -1,4 +1,3 @@
-# frozen_string_literal: true
 
 # Cannon Mallory
 # UW-BIOFAB
@@ -36,6 +35,7 @@ class Protocol
   CONC_RANGE = (50...100) # acceptable concentration range
   CSV_HEADERS = ['Plate ID', 'Well Location'].freeze
   CSV_LOCATION = 'Location TBD'
+  ADAPTER_KEY = "Adapter_key".to_sym
 
   def main
 
@@ -47,12 +47,19 @@ class Protocol
     operations.each do |op|
       input_fv_array = op.input_array(INPUT_ARRAY)
       output_fv_array = op.output_array(OUTPUT_ARRAY)
-      associate_field_values_to_plate(output_fv_array, working_plate)
       transfer_subsamples_to_working_plate(input_fv_array, working_plate, TRANSFER_VOL)
+      associate_field_values_to_plate(output_fv_array, working_plate)
+    end
+    
+    # multiple plates returned here.  For the off chance that eventually Duke Genome Center will want to 
+    # work with more than one plate at a time in the future.
+    adapter_plates = make_adapter_plate(working_plate.parts.length)
+    adapter_plates.each do |adapter_plate|
+      working_plate.associate(ADAPTER_KEY, adapter_plate)
+      associate_plate_to_plate(to_collection: working_plate, from_collection: adapter_plate)
     end
 
-    adapter_plate = make_adapter_plate(working_plate.parts.length)
-    associate_plate_to_plate(working_plate, adapter_plate)
+    
 
     store_input_collections(operations)
     rna_prep_steps(working_plate)
@@ -65,7 +72,8 @@ class Protocol
   def rna_prep_steps(working_plate)
     show do
       title 'Run RNA-Prep'
-      note "Run typical RNA-Prep Protocol with plate #{working_plate.id}"
+      note "Run typical RNA-Prep Protocol with RNA plate #{working_plate.id} 
+                and adapter plate #{working_plate.get(ADAPTER_KEY).class}"
       table highlight_non_empty(working_plate, check: false)
     end
   end
@@ -73,23 +81,33 @@ class Protocol
   # Instructions for making an adapter plate
   #
   # @param num_adapter_needed [int] the number of adapters needed for job
-  # @return adapter_plate [collection] plate with all required adapters
+  # @return adapter_plate [Array<collection>] plate with all required adapters
+  # TODO Add feteature so that they can specify the specific sample that the adapter needs to match with
+  # Or perhapse specify the specific groups that they need to go to (or a combination there of)
   def make_adapter_plate(num_adapters_needed)
-    adapter_plate = make_new_plate(COLLECTION_TYPE)
+    adapter_plates = []
 
     show do
       title 'Make Adapter Plate'
       note 'On the next page upload CSV of desired Adapters'
     end
-
     up_csv = get_validated_uploads(num_adapters_needed, CSV_HEADERS, false, file_location: CSV_LOCATION)
+    # TODO further validate up_csv   EG make sure that all the colletions are real etc and loop back
     col_parts_hash = sample_from_csv(up_csv)
+
+
+    first_collection = make_new_plate(COLLECTION_TYPE)
     col_parts_hash.each do |collection_item, parts|
       collection = Collection.find(collection_item.id)
-      add_samples_row_wise(parts, adapter_plate)
-      transfer_to_working_plate(collection, adapter_plate, ADAPTER_TRANSFER_VOL, array_of_samples: parts)
+      plates = make_and_populate_collection(parts, COLLECTION_TYPE, add_column_wise: true, 
+                label_plates: false, first_collection: first_collection)
+      plates.each do |adapter_plate|
+        transfer_to_new_collection(collection, adapter_plate, ADAPTER_TRANSFER_VOL, 
+                                    populate_collection: false, array_of_samples: parts)
+        adapter_plates.push(adapter_plate)
+      end
     end
-    adapter_plate
+    adapter_plates
   end
 
   # Parses CSV and returns an array of all the samples

@@ -38,7 +38,7 @@ class Protocol
 
     operations.each do |op|
       input_field_value_array = op.input_array(INPUT_ARRAY)
-      transfer_subsamples_to_working_plate(input_fv_array, working_plate, TRANSFER_VOL)
+      transfer_subsamples_to_working_plate(input_field_value_array, working_plate, TRANSFER_VOL)
     end
 
     store_input_collections(operations)

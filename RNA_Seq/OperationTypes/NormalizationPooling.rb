@@ -33,12 +33,13 @@ class Protocol
     validate_cdna_qc(operations)
     operations.retrieve
 
-    working_plate = make_new_plate(COLLECTION_TYPE, label_plate: multi_plate)
+    working_plate = make_new_plate(COLLECTION_TYPE)
+    
     operations.each do |op|
       input_fv_array = op.input_array(INPUT_ARRAY)
       output_fv_array = op.output_array(OUTPUT_ARRAY)
-      associate_field_values_to_plate(output_fv_array, working_plate)
       transfer_subsamples_to_working_plate(input_fv_array, working_plate, TRANSFER_VOL)
+      associate_field_values_to_plate(output_fv_array, working_plate)
     end
 
     normalization_pooling(working_plate)

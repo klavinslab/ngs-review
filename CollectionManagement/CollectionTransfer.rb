@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # Cannon Mallory
 # malloc3@uw.edu
 #
@@ -23,6 +21,7 @@ module CollectionTransfer
 
   TO_LOC = "To Loc".to_sym
   FROM_LOC = "From Loc".to_sym
+  VOL_TRANSFER = "Volume Transfered".to_sym
 
   
   # Provides instructions to transfer samples.  If samples to transfer are not given then it will assume that all
@@ -31,6 +30,8 @@ module CollectionTransfer
   # @param input_collection [Collection] the collection samples come from
   # @param to_collection[Collection] the collection samples will move to
   # @param transfer_vol [Integer] volume of sample to transfer (in ul)
+  # @param populate_collection [Boolean] true if the to_collection needs to be populated
+  #     false if the to_collection has already been populated.
   # @param array_of_samples [Array<Sample>] Optional
   #  
   # TODO Below
@@ -38,7 +39,8 @@ module CollectionTransfer
   # 1. get the item locations
   # 2. make Data associations  (done)
   # 3. give instructions  (done)
-  def transfer_to_new_collection(from_collection, to_collection, transfer_vol, array_of_samples: nil)
+  def transfer_to_new_collection(from_collection, to_collection, transfer_vol, 
+                populate_collection: true, array_of_samples: nil)
 
 
     #gets samples to transfer if not explicitly given
@@ -46,7 +48,7 @@ module CollectionTransfer
       array_of_samples = from_collection.parts.map { |part| part.sample if part.class != 'Sample' }
     end
 
-    add_samples_to_collection(array_of_samples, to_collection)
+    add_samples_to_collection(array_of_samples, to_collection) if populate_collection
     
 
     association_map = make_one_to_many_association_map(to_collection: to_collection, 
@@ -54,7 +56,8 @@ module CollectionTransfer
     
     
     associate_plate_to_plate(to_collection: to_collection, from_collection: from_collection,
-                               association_map: association_map)
+                               association_map: association_map, transfer_vol: transfer_vol)
+    
     collection_transfer_instructions(to_collection: to_collection, from_collection: from_collection,
                                       association_map: association_map, transfer_vol: transfer_vol)
   end
@@ -137,14 +140,14 @@ module CollectionTransfer
 
   # Creates a one to one association map for all filled slots of both to and from collection
   # if a slot is full in both collections that location is included in the association map
-  # regardless if the samples are the same or not, Collections must be the same demensions
+  # regardless if the samples are the same or not, Collections must be the same dimensions
   #
   # @param to_collection [Collection] the collection that things are moving to
   # @param from_collection [Collection] the collection that things are coming from
   # @param samples [Array<{to_loc: loc, from_loc: loc}>] array of samples that exists in both collections 
   def one_to_one_association_map(to_collection:, from_collection:)
-    to_row_dem, to_col_dem = to_collections.demensions
-    from_row_dem, from_col_dem = from_collections.demensions
+    to_row_dem, to_col_dem = to_collection.dimensions
+    from_row_dem, from_col_dem = from_collection.dimensions
     raise "Collection Demensions do not match" unless to_row_dem == from_row_dem && to_col_dem == from_col_dem
     association_map = []
     to_row_dem.times do |row|
@@ -155,6 +158,7 @@ module CollectionTransfer
         end
       end
     end
+    association_map
   end
 
   #returns an array of all samples that are the same in both collections
@@ -166,6 +170,24 @@ module CollectionTransfer
     samples_a = collection_a.parts.map!{|part| part.sample}
     samples_b = collection_b.parts.map!{|part| part.sample}
     samples_a & samples_b
+  end
+
+  # Adds x value to [R,C,X] list.  If x does not exist (eg [R,C])
+  # then will append, if X does exist will replace or concatonate strings
+  # based on inputs
+  #
+  # @param rc [Array<Row(int), Column(int), Optional(String)] the RC/RCX 
+  #       list to be modified
+  # @param x [String] string to be added to x values
+  # @param append: [Boolea] default true.  Replace if false
+  def append_x_to_rcx(rc, x, append: true)
+    x = x.to_s
+    if rc[3].nil? || !append
+      rc[2] = x
+    else
+      rc[2] += x 
+    end
+    rc
   end
 
   # provides instructions to technition for transfering items from one collection to another
@@ -188,15 +210,50 @@ module CollectionTransfer
           from_collection: from_collection) if association_map.nil?
 
     
-    input_rcx = []
-    output_rcx = []
+    from_rcx = []
+    to_rcx = []
+    from_locationnnnn = []
+    to_locationnnn = []
     association_map.each do |loc_hash|
-      input_location = loc_hash[:FROM_LOC]
-      output_location = loc_hash[:TO_LOC]
+      from_location = loc_hash[:FROM_LOC]
+      to_location = loc_hash[:TO_LOC]
 
-      input_alpha_loc = convert_rc_to_alpha(output_location)
-      input_rcx.push(input_location.push(input_alpha_loc))
-      output_rcx.push(output_location.push(input_alpha_loc))
+      inspect " from #{from_location}, to  #{to_location}"
+
+      t0_temp = to_location
+      from_temp = from_location
+      from_locationnnnn.push(from_temp)
+      to_locationnnn.push(t0_temp)
+
+      from_alpha_location = convert_rc_to_alpha(to_location)
+      
+      from_rcx.push(append_x_to_rcx(from_location, from_alpha_location))
+      to_rcx.push(append_x_to_rcx(to_location, from_alpha_location))
+    end
+
+
+
+    show do
+      note "<b> FROM LOCATION</b>"
+      from_rcx.each do |thing|
+        note "#{thing}"
+      end
+      note "<b> TO LOCATION</b>"
+      to_rcx.each do |thing|
+        note "#{thing}"
+      end
+    end
+
+    show do
+      note "<b> From LOCATION</b>"
+      from_locationnnnn.each do |thing|
+        note"#{thing}"
+      end
+
+      note "<b> t0 LOCATION</b>"
+      to_locationnnn.each do |thing|
+        note"#{thing}"
+      end
     end
 
     show do
@@ -206,10 +263,10 @@ module CollectionTransfer
            (<b>ID:#{to_collection.id}</b>) per tables below"
       separator
       note "Stock Plate (ID: <b>#{from_collection.id}</b>):"
-      table highlight_collection_rcx(from_collection, input_rcx,
+      table highlight_collection_rcx(from_collection, from_rcx,
           check: false)
       note "Working Plate (ID: <b>#{to_collection}</b>):"
-      table highlight_collection_rcx(to_collection, output_rcx,
+      table highlight_collection_rcx(to_collection, to_rcx,
           check: false)
     end
   end
@@ -306,6 +363,41 @@ module CollectionTransfer
     end
   end
 
+  # Makes the required number of collections and populates the collections with samples
+  # returns an array of of collections created
+  # 
+  # @param samples [Array<FieldValue>] or [Array<Samples>]
+  # @param collection_type [String] the type of collection that is to be made and populated
+  # @param add_column_wise [Boolean] default true.  Will add samples by column and not row
+  # @param label_plates [Booelan] default false, Mark as true if you want instructions to label plates to be shown
+  # @param first_colleciton [Collection] a starting collection to be completely filled first before moving on to 
+  #         making new collections.
+  # @return [Array<Collection>] an array of the collections that are now populated
+  #
+  # TODO Probably needs to move from collection Transfer
+  def make_and_populate_collection(samples, collection_type, add_column_wise: true, label_plates: false,
+               first_collection: nil)
+    first_collection = make_new_plate(collection_type, 
+                label_plate: label_plates) if first_collection.nil?
+
+    capacity = first_collection.capacity
+    collections = []
+    grouped_samples = samples.in_groups_of(capacity, false)
+    #TODO This if else thing could totally be removed if I figured out a way to get the capacity
+    # of the collection without making the collection first.  I am sure there is a way to do this
+    # however I haven't the time rn to figure it out.
+    grouped_samples.each_with_index do |sub_samples, idx|
+      if idx == 0
+        collection = first_collection
+      else
+        collection =  make_new_plate(collection_type, label_plate: label_plates)
+      end
+      add_samples_to_collection(sub_samples, collection, add_column_wise: add_column_wise)
+      collections.push(collection)
+    end
+    collections
+  end
+
   # Adds samples to the first slot in the first available colum 
   # as apposed to column wise that the base version does.
   #
@@ -336,8 +428,9 @@ module CollectionTransfer
   # @param to_collection [Collection] the plate that is getting the association
   # @param input_plate [Collection] the plate that is transfering the association
   # @param samples [Array<Samples>] array of samples that are to be associated over
+  # @param transfer_vol [Integer] the volume transfered if applicable default nil
   #   if nil then will associate all common samples
-  def associate_plate_to_plate(to_collection:, from_collection:, association_map: nil)
+  def associate_plate_to_plate(to_collection:, from_collection:, association_map: nil, transfer_vol: nil)
     # map = [[loc1_to, loc2_from], [loc1,loc2], [loc1, loc2]]
 
     #if there is no association map given it will assume they came one to one
@@ -345,13 +438,11 @@ module CollectionTransfer
     # in the "to_collection"
     if association_map.nil?
       association_map = one_to_one_association_map(to_collection: to_collection,
-                                            from_colleciton: from_collection)
+                                            from_collection: from_collection)
     end
 
     from_obj_to_obj_provenance(to_collection, from_collection)
 
-    
-    
     association_map.each do |loc_hash|
 
       to_loc = loc_hash[:TO_LOC]
@@ -363,8 +454,23 @@ module CollectionTransfer
       to_part = to_collection.part(to_loc[0],to_loc[1])
       from_part = from_collection.part(from_loc[0], from_loc[1])
 
+      associate_transfer_vol(transfer_vol, to_part: to_part, from_part: from_part) unless transfer_vol.nil?
+
       from_obj_to_obj_provenance(to_part, from_part)
     end
+  end
+
+  # Records the volume of an item that was transfered (or at least what the code)
+  # instructed the technition to transfer.   Creates an array of all the transfered volumes
+  # for future use Array<Array<from_part_id, volume>, ...>
+  # @param vol the volume transfered
+  # @param to_part: part that is being transfered to
+  # @param from_part: part that is being transfered from
+  def associate_transfer_vol(vol, to_part:, from_part:)
+    vol_transfer_array = to_part.get(VOL_TRANSFER)
+    vol_transfer_array = [] if vol_transfer_array.nil?
+    vol_transfer_array.push([from_part.id, vol])
+    to_part.associate(VOL_TRANSFER, vol_transfer_array)
   end
 
 

@@ -1,4 +1,3 @@
-# frozen_string_literal: true
 
 # Cannon Mallory
 # malloc3@uw.edu
@@ -154,7 +153,7 @@ module CollectionActions
   # @param collection [Collection] the destination collection
   # replaced make_output_plate
   def associate_field_values_to_plate(fv_array, collection)
-    output_fv_array.each do |fv|
+    fv_array.each do |fv|
       r_c = collection.find(fv.sample).first
       fv.set(collection: collection, row: r_c[0], column: r_c[1]) unless r_c.first.nil?
     end
