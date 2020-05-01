@@ -10,6 +10,7 @@ needs 'Standard Libs/Units'
 needs 'Standard Libs/Debug'
 needs 'Standard Libs/AssociationManagement'
 needs 'Collection_Management/CollectionLocation'
+needs 'Collection_Management/CollectionData'
 
 module CollectionTransfer
 
@@ -18,6 +19,7 @@ module CollectionTransfer
   include CollectionLocation
   include AssociationManagement
   include PartProvenance
+  include CollectionData
 
   TO_LOC = "To Loc".to_sym
   FROM_LOC = "From Loc".to_sym
@@ -161,34 +163,7 @@ module CollectionTransfer
     association_map
   end
 
-  #returns an array of all samples that are the same in both collections
-  #
-  # @param collection_a [Collection] a collection
-  # @param collection_b [Collection] a collection
-  # @return [Array<Sample>]
-  def find_like_samples(collection_a, collection_b)
-    samples_a = collection_a.parts.map!{|part| part.sample}
-    samples_b = collection_b.parts.map!{|part| part.sample}
-    samples_a & samples_b
-  end
 
-  # Adds x value to [R,C,X] list.  If x does not exist (eg [R,C])
-  # then will append, if X does exist will replace or concatonate strings
-  # based on inputs
-  #
-  # @param rc [Array<Row(int), Column(int), Optional(String)] the RC/RCX 
-  #       list to be modified
-  # @param x [String] string to be added to x values
-  # @param append: [Boolea] default true.  Replace if false
-  def append_x_to_rcx(rc, x, append: true)
-    x = x.to_s
-    if rc[3].nil? || !append
-      rc[2] = x
-    else
-      rc[2] += x 
-    end
-    rc
-  end
 
   # provides instructions to technition for transfering items from one collection to another
   # 
@@ -212,48 +187,12 @@ module CollectionTransfer
     
     from_rcx = []
     to_rcx = []
-    from_locationnnnn = []
-    to_locationnnn = []
     association_map.each do |loc_hash|
       from_location = loc_hash[:FROM_LOC]
       to_location = loc_hash[:TO_LOC]
-
-      inspect " from #{from_location}, to  #{to_location}"
-
-      t0_temp = to_location
-      from_temp = from_location
-      from_locationnnnn.push(from_temp)
-      to_locationnnn.push(t0_temp)
-
-      from_alpha_location = convert_rc_to_alpha(to_location)
-      
+      from_alpha_location = convert_rc_to_alpha(to_location)   
       from_rcx.push(append_x_to_rcx(from_location, from_alpha_location))
       to_rcx.push(append_x_to_rcx(to_location, from_alpha_location))
-    end
-
-
-
-    show do
-      note "<b> FROM LOCATION</b>"
-      from_rcx.each do |thing|
-        note "#{thing}"
-      end
-      note "<b> TO LOCATION</b>"
-      to_rcx.each do |thing|
-        note "#{thing}"
-      end
-    end
-
-    show do
-      note "<b> From LOCATION</b>"
-      from_locationnnnn.each do |thing|
-        note"#{thing}"
-      end
-
-      note "<b> t0 LOCATION</b>"
-      to_locationnnn.each do |thing|
-        note"#{thing}"
-      end
     end
 
     show do
@@ -454,7 +393,7 @@ module CollectionTransfer
       to_part = to_collection.part(to_loc[0],to_loc[1])
       from_part = from_collection.part(from_loc[0], from_loc[1])
 
-      associate_transfer_vol(transfer_vol, to_part: to_part, from_part: from_part) unless transfer_vol.nil?
+      associate_transfer_vol(transfer_vol, VOL_TRANSFER, to_part: to_part, from_part: from_part) unless transfer_vol.nil?
 
       from_obj_to_obj_provenance(to_part, from_part)
     end
@@ -466,38 +405,10 @@ module CollectionTransfer
   # @param vol the volume transfered
   # @param to_part: part that is being transfered to
   # @param from_part: part that is being transfered from
-  def associate_transfer_vol(vol, to_part:, from_part:)
-    vol_transfer_array = to_part.get(VOL_TRANSFER)
+  def associate_transfer_vol(vol, key, to_part:, from_part:)
+    vol_transfer_array = get_associated_data(to_part, key)
     vol_transfer_array = [] if vol_transfer_array.nil?
     vol_transfer_array.push([from_part.id, vol])
-    to_part.associate(VOL_TRANSFER, vol_transfer_array)
+    associate_data(to_part, key, vol_transfer_array)
   end
-
-
-  # Adds provenence historuy to to_object from from_object
-  #
-  # @param from_obj [Krill Object] object that provenance is coming from
-  # @param to_obj [Krill Object] the object that provenance is going to
-  def from_obj_to_obj_provenance(to_obj, from_obj)
-    from_obj_map = AssociationMap.new(from_obj)
-    to_obj_map = AssociationMap.new(to_obj)
-    add_provenance(from: from_obj, from_map: from_obj_map,
-                    to: to_obj, to_map: to_obj_map)
-    from_obj_map.save
-    to_obj_map.save
-  end
-
-  # gives an array of parts in the collection that match the right sample
-  #
-  # @param collection [Collection] the collecton that the part exists in
-  # @param sample [Sample] the sample searched for
-  def parts_from_sample(collection, sample)
-    part_loc = collection.find(sample)
-    parts = []
-    part_loc.each do |r_c|
-      parts.push(collection.part(r_c[0], r_c[1]))
-    end
-    parts
-  end
-
 end

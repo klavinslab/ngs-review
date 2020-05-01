@@ -46,7 +46,7 @@ module CollectionDisplay
     tab
   end
   
-  #turns numbers in top alpha values (eg 1->A 27-AA etc)
+  #turns numbers in to alpha values (eg 1->A 27-AA etc)
   #
   # @param num [Int] the integer to be turned
   def get_alpha(num)
@@ -269,5 +269,24 @@ module CollectionDisplay
   # @return [Table]
   def highlight_alpha_non_empty(collection, check: true, &rc_block)
     highlight_alpha_rc(collection, collection.get_non_empty, check: check, &rc_block)
+  end
+
+  # Creates table for the data associated with said key
+  # TODO write highlight heat map method for table
+  #
+  # @param collection [Collection] the plate being used
+  # @param key [String] the key that the data is associated with.
+  # @return table of parts with data information
+  def display_data(collection, key)
+    rcx_array = []
+    parts = collection.parts
+    parts.each do |part|
+      loc_array = collection.find(part)
+      loc_array.each do |loc|
+        loc.push(get_associated_data(part,key))
+        rcx_array.push(loc)
+      end
+    end
+    highlight_collection_rcx(collection, rcx_array, check: false)
   end
 end

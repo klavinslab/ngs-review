@@ -37,6 +37,7 @@ class Protocol
   CSV_HEADERS = ['Plate',	'Repeat',	'End time',	'Start temp.',	'End temp.',	'BarCode'].freeze # freeze constant
   CSV_LOCATION = 'TBD Location of file'
 
+
   def main
     validate_inputs(operations)
 
@@ -47,35 +48,47 @@ class Protocol
       input_field_value_array = op.input_array(INPUT_ARRAY)
       transfer_subsamples_to_working_plate(input_field_value_array, working_plate, TRANSFER_VOL)
     end
-
     store_input_collections(operations)
-    plate_reader_data = take_duke_plate_reader_measurement(working_plate, CSV_HEADERS, CSV_LOCATION)
+
+
+    dilution_factor_map = get_dilution_factors(working_plate)
+    associate_value_to_parts(plate: working_plate, data_map: dilution_factor_map, key: DILUTION_FACTOR)
+
+    csv, standards = take_duke_plate_reader_measurement(working_plate, CSV_HEADERS, CSV_LOCATION)
+    slope, intercept = calculate_slope_intercept(point_one: standards[0], point_two: standards[1])
+
+    concentration_map = calculate_concentrations(slope: slope, intercept: intercept, 
+                  plate_csv: csv, dilution_map: dilution_factor_map)
+    associate_value_to_parts(plate: working_plate, data_map: concentration_map, key: CON_KEY)
+    
+
 
     #todo do math on qc measurements
-    #list_concentrations(working_plate)
-    #trash_object(working_plate)
+    show do
+      title "Measured Data"
+      note "Listed below are the data collected"
+      note "Concentration (ng/ul):"
+      table display_data(working_plate, CON_KEY)
+    end
+    trash_object(working_plate)
   end
 
 
-
-  # Lists the measured concentrations.
-  # TODO write highlight heat map method for table
+  # TODO
+  # Gets the dilution factors used in the plate reader measurements
+  # Need some guidance on how this is determined.  I expect that this is somthing
+  # that can automatically be generated within aquarium.  But also may require
+  # some user input?   For now leave it open for change
   #
-  # @param working_plate [Collection] the plate being used
-  def list_concentrations(working_plate)
-    rcx_array = []
-    parts = working_plate.parts
-    parts.each do |part|
-      loc_array = working_plate.find(part)
-      loc_array.each do |loc|
-        loc.push(part.get(CON_KEY))
-        rcx_array.push(loc)
-      end
+  # @return dilution_factor_map [Array<r,c,x>] a map of dilution factors and location
+  def get_dilution_factors(working_plate)
+    show do 
+      title "Dilution Factor"
+      note "Need to determin how this is decided.  For now dilution is assumed to be
+        100."
+      note "A user input may be needed or further understanding and control of,
+              the transfer step may be required..."
     end
-    show do
-      title 'Measurements Take'
-      note 'Recorded Concentrations are listed below'
-      table highlight_collection_rcx(working_plate, rcx_array, check: false)
-    end
+    generate_100_dilution_factor_map(working_plate)
   end
 end
