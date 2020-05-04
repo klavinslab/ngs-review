@@ -10,7 +10,7 @@ needs "Standard Libs/Units"
 needs "Collection_Management/CollectionDisplay"
 needs "Collection_Management/CollectionTransfer"
 needs "Collection_Management/CollectionActions"
-needs "Collection_Management/SampleManagement"
+needs "Collection_Management/CollectionLocation"
 needs "RNA_Seq/WorkflowValidation"
 needs "RNA_Seq/KeywordLib"
 
@@ -18,7 +18,7 @@ class Protocol
   include Debug
   include CollectionDisplay
   include CollectionTransfer
-  include SampleManagement
+  include CollectionLocation
   include CollectionActions
   include WorkflowValidation
   include CommonInputOutputNames
@@ -30,29 +30,16 @@ class Protocol
   def main
 
     validate_inputs(operations, inputs_match_outputs: true)
-
     validate_cdna_qc(operations)
-
-    multi_plate = multiple_plates?(operations)
-
-    working_plate = make_new_plate(COLLECTION_TYPE, label_plate: multi_plate)
-
     operations.retrieve
 
+    working_plate = make_new_plate(COLLECTION_TYPE)
+    
     operations.each do |op|
       input_fv_array = op.input_array(INPUT_ARRAY)
       output_fv_array = op.output_array(OUTPUT_ARRAY)
-      add_samples_to_collection(input_fv_array, working_plate)
-      make_output_plate(output_fv_array, working_plate)
-      transfer_subsamples_to_working_plate(input_fv_array, working_plate, TRANSFER_VOL) if multi_plate
-    end
-
-    unless multi_plate
-      input_plate = operations.first.input_array(INPUT_ARRAY).first.collection
-      relabel_plate(input_plate,working_plate)
-      input_plate.mark_as_deleted
-    else
-      trash_object(get_array_of_collections(operations, 'input'))
+      transfer_subsamples_to_working_plate(input_fv_array, working_plate, TRANSFER_VOL)
+      associate_field_values_to_plate(output_fv_array, working_plate)
     end
 
     normalization_pooling(working_plate)

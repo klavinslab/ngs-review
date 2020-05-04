@@ -8,8 +8,8 @@ module UploadHelper
   require 'open-uri'
 
   CSV_KEY = 'upload_csv'
-
-  #
+  REAL_CHARACTERS = ('!'...'~').to_a
+  
   # @param dirname - directory where files are located, or full path including filename
   # @param exp_upload_num - expected number of files to upload
   # @param tries - max. number of attempts to upload expectedNum files
@@ -41,6 +41,7 @@ module UploadHelper
         note "File(s) location is: #{dirname}"
         if attempt > 1
           warning "Number of uploaded files (#{number_of_uploads}) was incorrect, please try again! (Attempt #{attempt} of #{tries})"
+          note "Please hit <b>Okay</b> to try again"
         end
         upload var: 'files'
       end
@@ -88,27 +89,33 @@ module UploadHelper
       show do
         title 'No File Attached'
         warning 'No File Was Attached'
+        note "Please hit <b>Okay</b> to try again"
       end
       return false
     end
 
     fail_message = ''
 
+
+    # TODO this makes no sense....   Deff should expect more than one file sometimes...
     if multiple_files == false
       fail_message += 'More than one file was uploaded, ' if upload_array.length > 1
       upload = upload_array.first
     end
 
     csv = CSV.read(open(upload.url))
+    
     fail_message += 'CSV length is shorter
         than expected, ' if csv.length - 1 < expected_num_inputs
-
+    
+    
+    # TODO Make this more robust.   Sometimes CSV files contain unprintable characters
+    # and mess everythign up.  This works for now but isn't the best solution
     first_row = csv.first
-    # Should remove leading blank space from CSV
-    first_row[0][0] = ''
+    first_row[0][0] = '' unless REAL_CHARACTERS.include?(first_row[0][0].upcase)
 
     csv_headers.each do |header|
-      fail_message += "<b>#{header} Header</b> either does not exist or
+      fail_message += "<b>#{header}</b> Header either does not exist or
         is in wrong format, " if !first_row.include?(header)
     end
 
@@ -116,6 +123,7 @@ module UploadHelper
       show do
         title 'Warning Uploaded CSV does not fit correct format'
         note "#{fail_message}"
+        note "Please hit <b>Okay</b> to try again"
       end
       return false
     else
