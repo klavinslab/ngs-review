@@ -23,12 +23,28 @@ module DataHelper
   include WorkflowValidation
   include AssociationManagement
 
-  PLATE_READER_DATA_KEY = "Plate Reader Data"
+
+  # TODO
+  # Gets the dilution factors used in the plate reader measurements
+  # Need some guidance on how this is determined.  I expect that this is somthing
+  # that can automatically be generated within aquarium.  But also may require
+  # some user input?   For now leave it open for change
+  #
+  # @return dilution_factor_map [Array<r,c,x>] a map of dilution factors and location
+  def get_dilution_factors(working_plate)
+    show do 
+      title "Dilution Factor"
+      note "Need to determin how this is decided.  For now dilution is assumed to be
+        100."
+      note "A user input may be needed or further understanding and control of,
+              the transfer step may be required..."
+    end
+    generate_100_dilution_factor_map(working_plate)
+  end
 
 
-  # Instructions for taking the QC measurements
-  # Currently not operational but associates random concentrations for testing
-  # This only works for the csv format at duke genome center
+  # Instructions for taking the QC Plate Reader measurements
+  # 
   #
   # @param working_plate [Collection] the plate of samples needing measurements
   # @return parseable csv file map of fluorescense values
@@ -37,7 +53,7 @@ module DataHelper
 
     show do
       title "Load Plate #{working_plate.id} on Plate Reader"
-      note 'Load plate on plate reader and take concentration measurements'
+      note 'Load plate on plate reader and take measurements'
       note 'Save output data as CSV and upload on next page'
     end
 
@@ -49,6 +65,61 @@ module DataHelper
     associate_data(working_plate, PLATE_READER_DATA_KEY, plate_reader_info)
     [csv.drop(6), standards]
   end
+
+
+  # Instructions for taking Duke Bioanalyzer measurements 
+  # 
+  #
+  # @param working_plate [Collection] the plate of samples needing measurements
+  # @return parseable csv file map of fluorescense values
+  def take_bioanalizer_measurement(working_plate, csv_headers, csv_location, measurement_type: nil)
+    if measurement_type == 'library'
+      description = 'Library DNA'
+    elsif measurement_type == 'rna'
+      description = 'RNA'
+    else
+      description = ''
+    end
+    
+    show do
+      title "Load Plate #{working_plate.id} onto the Bioanalyzer"
+      note "Load plate onto the Bioanalyzer and take <b>#{description}</b> measurements"
+      note 'Save output data as CSV and upload on next page'
+    end
+
+    csv_uploads = get_validated_uploads(working_plate.parts.length,
+      csv_headers, false, file_location: csv_location)
+
+    upload = csv_uploads.first
+    csv = CSV.read(open(upload.url))
+
+    associate_data(working_plate, BIOANALYZER_KEY, csv)
+    csv
+  end
+
+  # Parses a csv for data assuming headers fit certain format
+  #  Header 1    Header 2    Header 3
+  #    loc         data      data
+  #    loc         data       data
+  # 
+  # @param csv [CSV] the csv file
+  # @param data_header [String] the string name of the header containg the inforamtion of interest
+  # @param alpha_num_header [String] optional the name of the header containg the 
+  #               alpha numerical well location
+  def parse_csv_for_data(csv, data_header:, alpha_num_header:)
+    data_idx = csv.first.index(data_header)
+    loc_idx = csv.first.index(alpha_num_header)
+    data_map = []
+    csv.drop(1).each do |row|
+      alpha_loc = row[loc_idx]
+      data = row[data_idx]
+      rc_loc = convert_alpha_to_rc(alpha_loc)
+      data_map.push(rc_loc.push(data))
+    end
+    data_map
+  end
+
+
 
   # Gets the standards used and information about them from technition
   #
@@ -64,10 +135,11 @@ module DataHelper
       response = show do
         title "Plate Reader Standards"
         note 'Please record the standards used and their fluorescence below'
-        get "number", var: "stan_1", label: "Standard 1", default: ""
-        get "number", var: "flo_1", label: "fluorescence 1", default: ""
-        get "number", var: "stan_2", label: "Standard 2", default: ""
-        get "number", var: "flo_2", label: "fluorescence 2", default: ""
+        get "number", var: "stan_1", label: "Concentration 1 (ng/ul)", default: ""
+        get "number", var: "flo_1", label: "Fluorescence 1", default: ""
+        separator
+        get "number", var: "stan_2", label: "Concentrationn 2 (ng/ul)", default: ""
+        get "number", var: "flo_2", label: "Fluorescence 2", default: ""
       end
       # This is because in this case  the lower concentration should always be first
       # else slope will be negative.   Rather do it here than in the slope calculation
@@ -83,10 +155,11 @@ module DataHelper
       
       return [point_one, point_two] unless point_two.include?("") || point_one.include?("")
 
-      raise "Too many attempts to input Plate Reader Standards information" if laps > 9
+      raise "Too many attempts to input Plate Reader Standards information" if laps > tries - 1
       show do 
-        title "Plate Reader Standards not entered properly"
-        warning "Please put valid standards information" 
+        title "Plate Reader Standards not Entered Properly"
+        warning "Please input valid Standard Values"
+        note "Hit okay to try again" 
       end
     end
   end

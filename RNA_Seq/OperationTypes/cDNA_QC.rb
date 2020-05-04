@@ -10,12 +10,14 @@
 needs 'Standard Libs/Debug'
 needs 'Standard Libs/CommonInputOutputNames'
 needs 'Standard Libs/Units'
+needs 'Standard Libs/UploadHelper'
 needs 'Collection_Management/CollectionDisplay'
 needs 'Collection_Management/CollectionTransfer'
 needs 'Collection_Management/CollectionActions'
 needs 'Collection_Management/CollectionLocation'
 needs 'RNA_Seq/WorkflowValidation'
 needs 'RNA_Seq/KeywordLib'
+needs 'RNA_Seq/DataHelper'
 
 class Protocol
   include CollectionDisplay
@@ -26,8 +28,15 @@ class Protocol
   include Debug
   include CollectionLocation
   include WorkflowValidation
+  include UploadHelper
+  include DataHelper
 
   TRANSFER_VOL = 20 # volume of sample to be transfered in ul
+  PLATE_HEADERS = ['Plate',	'Repeat',	'End time',	'Start temp.',	'End temp.',	'BarCode'].freeze # freeze constant
+  PLATE_LOCATION = 'TBD Location of file'
+
+  BIO_HEADERS = ['Well',	'Sample ID',	'Range',	'ng/uL',	'% Total',	'nmole/L',	'Avg. Size',	'%CV'].freeze # freeze constant
+  BIO_LOCATION = 'TBD Location of file'
 
   def main
     validate_inputs(operations)
@@ -42,37 +51,33 @@ class Protocol
     end
 
     store_input_collections(operations)
-    take_qc_measurments(working_plate)
-    trash_object(working_plate)
-  end
 
-  # Gives instruction for taking the QC measurements
-  # Currently not operational but associates random concentrations for testing
-  #
-  # @param working_plate [collection] the plate with samples
-  def take_qc_measurments(working_plate)
-    input_rcx = []
-    operations.each do |op|
-      input_array = op.input_array(INPUT_ARRAY)
-      input_items = input_array.map { |fv| fv.item }
-      array_of_samples = input_array.map { |fv| fv.sample }
-      input_items.each_with_index do |item, idx|
-        item.associate(QC2_KEY, 'Pass')
-        sample = array_of_samples[idx]
-        working_plate_loc_array = working_plate.find(sample)
-        working_plate_loc_array.each do |sub_array|
-          sub_array.push("#{item.get(QC2_KEY)}")
-          input_rcx.push(sub_array)
-        end
-      end
-    end
+    dilution_factor_map = get_dilution_factors(working_plate)
+    associate_value_to_parts(plate: working_plate, data_map: dilution_factor_map, key: DILUTION_FACTOR)
 
+    plate_reader_csv, standards = take_duke_plate_reader_measurement(working_plate, PLATE_HEADERS, PLATE_LOCATION)
+    slope, intercept = calculate_slope_intercept(point_one: standards[0], point_two: standards[1])
+
+    concentration_map = calculate_concentrations(slope: slope, intercept: intercept, 
+                  plate_csv: plate_reader_csv, dilution_map: dilution_factor_map)
+    associate_value_to_parts(plate: working_plate, data_map: concentration_map, key: CON_KEY)
+    
+
+    bio_csv = take_bioanalizer_measurement(working_plate, BIO_HEADERS, BIO_LOCATION, 
+                  measurement_type: 'library')
+    ave_size_map = parse_csv_for_data(bio_csv, data_header: BIO_HEADERS[6], alpha_num_header: BIO_HEADERS[0])
+    associate_value_to_parts(plate: working_plate, data_map: ave_size_map, key: AVE_SIZE_KEY)
+
+    #todo do math on qc measurements
     show do
-      title 'Perform QC Measurements'
-      note 'Please Attach excel files'
-      note 'For testing purposes each sample will assume to pass'
-      note 'This will eventually come from a CSV file'
-      table highlight_collection_rcx(working_plate, input_rcx, check: false)
+      title "Measured Data"
+      note "Listed below are the data collected"
+      note "Concentration (ng/ul):"
+      table display_data(working_plate, CON_KEY)
+      note "Avg. Size"
+      table display_data(working_plate, AVE_SIZE_KEY)
     end
+
+    trash_object(working_plate)
   end
 end

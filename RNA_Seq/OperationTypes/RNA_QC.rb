@@ -34,9 +34,11 @@ class Protocol
   include DataHelper
 
   TRANSFER_VOL = 20 # volume of sample to be transfered in ul
-  CSV_HEADERS = ['Plate',	'Repeat',	'End time',	'Start temp.',	'End temp.',	'BarCode'].freeze # freeze constant
-  CSV_LOCATION = 'TBD Location of file'
+  PLATE_HEADERS = ['Plate',	'Repeat',	'End time',	'Start temp.',	'End temp.',	'BarCode'].freeze # freeze constant
+  PLATE_LOCATION = 'TBD Location of file'
 
+  BIO_HEADERS = ['Well', 'Sample ID',	'Conc. (ng/ul)',	'RQN',	'28S/18S'].freeze # freeze constant
+  BIO_LOCATION = 'TBD Location of file'
 
   def main
     validate_inputs(operations)
@@ -54,14 +56,18 @@ class Protocol
     dilution_factor_map = get_dilution_factors(working_plate)
     associate_value_to_parts(plate: working_plate, data_map: dilution_factor_map, key: DILUTION_FACTOR)
 
-    csv, standards = take_duke_plate_reader_measurement(working_plate, CSV_HEADERS, CSV_LOCATION)
+    plate_reader_csv, standards = take_duke_plate_reader_measurement(working_plate, PLATE_HEADERS, PLATE_LOCATION)
     slope, intercept = calculate_slope_intercept(point_one: standards[0], point_two: standards[1])
 
     concentration_map = calculate_concentrations(slope: slope, intercept: intercept, 
-                  plate_csv: csv, dilution_map: dilution_factor_map)
+                  plate_csv: plate_reader_csv, dilution_map: dilution_factor_map)
     associate_value_to_parts(plate: working_plate, data_map: concentration_map, key: CON_KEY)
     
 
+    bio_csv = take_bioanalizer_measurement(working_plate, BIO_HEADERS, BIO_LOCATION,
+                  measurement_type: 'rna')
+    rin_map = parse_csv_for_data(bio_csv, data_header: BIO_HEADERS[3], alpha_num_header: BIO_HEADERS[0])
+    associate_value_to_parts(plate: working_plate, data_map: rin_map, key: RIN_KEY)
 
     #todo do math on qc measurements
     show do
@@ -69,26 +75,9 @@ class Protocol
       note "Listed below are the data collected"
       note "Concentration (ng/ul):"
       table display_data(working_plate, CON_KEY)
+      note "RIN number"
+      table display_data(working_plate, RIN_KEY)
     end
     trash_object(working_plate)
-  end
-
-
-  # TODO
-  # Gets the dilution factors used in the plate reader measurements
-  # Need some guidance on how this is determined.  I expect that this is somthing
-  # that can automatically be generated within aquarium.  But also may require
-  # some user input?   For now leave it open for change
-  #
-  # @return dilution_factor_map [Array<r,c,x>] a map of dilution factors and location
-  def get_dilution_factors(working_plate)
-    show do 
-      title "Dilution Factor"
-      note "Need to determin how this is decided.  For now dilution is assumed to be
-        100."
-      note "A user input may be needed or further understanding and control of,
-              the transfer step may be required..."
-    end
-    generate_100_dilution_factor_map(working_plate)
   end
 end

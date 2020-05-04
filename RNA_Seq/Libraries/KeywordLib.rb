@@ -18,5 +18,11 @@ module KeywordLib
   INPUT_PLATE = 'Input Plate'
   INPUT_ITEM = 'Input Item'
 
+  PLATE_READER_DATA_KEY = "Plate Reader Data"
+  BIOANALYZER_KEY = "Bioanalyzer Data"
+  RIN_KEY = "Rin Number"
+
+  AVE_SIZE_KEY = "Avg. Size"
+
 
 end
