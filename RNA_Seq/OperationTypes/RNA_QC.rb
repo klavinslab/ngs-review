@@ -40,18 +40,30 @@ class Protocol
   BIO_HEADERS = ['Well', 'Sample ID',	'Conc. (ng/ul)',	'RQN',	'28S/18S'].freeze # freeze constant
   BIO_LOCATION = 'TBD Location of file'
 
+  RIN_MIN = 3
+  RIN_MAX = 10
+
+  CONC_MIN = 8
+  CONC_MAX = 100
+  UP_MARG = 500
+  LOW_MARG = 5
+
   def main
-    validate_inputs(operations)
+    return true if validate_inputs(operations) #validat_inputs retun true if invalid
 
     working_plate = make_new_plate(COLLECTION_TYPE)
     operations.retrieve
+
+    #this is so if the protocol fails we dont end up with a bunch of 
+    # plats in inventory that actually dont exist. 
+    working_plate.mark_as_deleted
+    working_plate.save
 
     operations.each do |op|
       input_field_value_array = op.input_array(INPUT_ARRAY)
       transfer_subsamples_to_working_plate(input_field_value_array, working_plate, TRANSFER_VOL)
     end
     store_input_collections(operations)
-
 
     dilution_factor_map = get_dilution_factors(working_plate)
     associate_value_to_parts(plate: working_plate, data_map: dilution_factor_map, key: DILUTION_FACTOR)
@@ -69,15 +81,23 @@ class Protocol
     rin_map = parse_csv_for_data(bio_csv, data_header: BIO_HEADERS[3], alpha_num_header: BIO_HEADERS[0])
     associate_value_to_parts(plate: working_plate, data_map: rin_map, key: RIN_KEY)
 
-    #todo do math on qc measurements
-    show do
-      title "Measured Data"
-      note "Listed below are the data collected"
-      note "Concentration (ng/ul):"
-      table display_data(working_plate, CON_KEY)
-      note "RIN number"
-      table display_data(working_plate, RIN_KEY)
-    end
+    rin_info = generate_data_range(key: RIN_KEY, minimum: RIN_MIN, maximum: RIN_MAX)
+    conc_info = generate_data_range(key: CON_KEY, minimum: CONC_MIN, maximum: CONC_MAX, 
+             lower_margin: LOW_MARG, upper_margin: UP_MARG)
+    asses_qc_values(working_plate, [rin_info, conc_info])
+    
+
+    show_key_associated_data(working_plate, [QC_STATUS, CON_KEY, RIN_KEY])
+
+
+    #TODO For some reason it will not overwrite the old association... Not sure why but it wont.
+    # so once a qc has been established it is that way for ever
+    associate_data_back_to_input(working_plate, [QC_STATUS, CON_KEY, RIN_KEY], operations)
+    
+
     trash_object(working_plate)
+
+    downstream_op_type = 'RNA Prep'
+    return if stop_qc_failed_operations(operations, downstream_op_type)
   end
 end

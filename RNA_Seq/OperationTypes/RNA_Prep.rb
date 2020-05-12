@@ -39,8 +39,9 @@ class Protocol
 
   def main
 
-    validate_inputs(operations, inputs_match_outputs: true)
-    validate_concentrations(operations, CONC_RANGE)
+    return if validate_inputs(operations, inputs_match_outputs: true)
+        || validate_concentrations(operations, CONC_RANGE)
+    
     operations.retrieve
 
     working_plate = make_new_plate(COLLECTION_TYPE)

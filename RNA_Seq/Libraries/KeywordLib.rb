@@ -24,5 +24,6 @@ module KeywordLib
 
   AVE_SIZE_KEY = "Avg. Size"
 
+  QC_STATUS = "QC Status"
 
 end

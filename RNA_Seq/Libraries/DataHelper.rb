@@ -57,8 +57,9 @@ module DataHelper
       note 'Save output data as CSV and upload on next page'
     end
 
+    detailed_instructions = "Upload Plate Reader measurement files"
     csv_uploads = get_validated_uploads(working_plate.parts.length,
-      csv_headers, false, file_location: csv_location)
+      csv_headers, false, file_location: csv_location, detailed_instructions: detailed_instructions)
 
     csv, plate_reader_info = pre_parse_plate_reader_data(csv_uploads)
 
@@ -87,8 +88,9 @@ module DataHelper
       note 'Save output data as CSV and upload on next page'
     end
 
+    detailed_instructions = "Upload Bioanalyzer #{description} measurement files"
     csv_uploads = get_validated_uploads(working_plate.parts.length,
-      csv_headers, false, file_location: csv_location)
+      csv_headers, false, file_location: csv_location, detailed_instructions: detailed_instructions)
 
     upload = csv_uploads.first
     csv = CSV.read(open(upload.url))
@@ -235,4 +237,119 @@ module DataHelper
     end
     concentration_map
   end
+
+
+  # Generates a hash with the margin range and the data key.  To be passed to 
+  # "asses_qc_values" method 
+  def generate_data_range(key:, minimum:, maximum:, lower_margin: nil, upper_margin: nil)
+    good_range = (minimum...maximum+1)
+    margin = []
+
+    #couldn't use unless since I needed if later
+    if !lower_margin.nil? || !upper_margin.nil?
+      margin = (lower_margin...upper_margin)
+    elsif lower_margin.nil?
+      margin = (minimum... upper_margin)
+    else upper_margin.nil?
+      margin = (lower_margin...maximum)
+    end
+
+    {'key': key, 'pass': good_range, 'margin': margin}
+  end
+
+
+  # Asses weather the data heald in info array keys are within the 
+  # margins given by the hash
+  #
+  # @param collection [Colleciton] the collection in question
+  # @param info_array [Array<Hash{key, pass, margin}]
+  def asses_qc_values(collection, info_array)
+    collection.parts.each do |part|
+        overall_status = nil
+        info_array.each do |info_hash|
+          key = info_hash[:key]
+          pass_array = info_hash[:pass]
+
+          margin = info_hash[:margin]
+
+          data = get_associated_data(part, key).to_f
+
+
+          if pass_array.include?(data)
+            point_status = 'pass'
+          elsif margin.include?(data)
+            point_status = 'margin'
+          elsif data.nil?
+            point_status = nil
+          else
+            point_status = 'fail'
+          end
+
+          change_arry = ['margin', 'fail']
+          unless point_status == overall_status
+            if overall_status.nil?
+              overall_status = point_status
+            elsif overall_status == 'pass' && change_arry.include?(point_status)
+              overall_status = point_status
+            end #if overall status == margin || fail && point_status == pass stay as margin/fail
+            # If point_status.nil? then nothing changes overall_status == overall_status
+          end
+
+        end
+        associate_data(part, QC_STATUS, overall_status) unless overall_status.nil?
+    end 
+  end
+
+
+  # Associates data back to the input samples based on the source determined from 
+  # provenence.
+  #
+  # @param collection [Collection] the collection with items of question
+  # @param array_of_keys [Array<string>] an array or keys for the associations
+  #       that need to be back associated
+  def associate_data_back_to_input(collection, array_of_keys, operations)
+    input_io_fv = get_input_field_values(operations)
+
+    collection.parts.each do |part|
+      sources = get_associated_data(part, 'source')
+      sources.uniq! #so if multiple sources are the same item data
+      # is transfered only once
+      sources.each do |sample_source|
+        unless sample_source.nil?
+          field_value = input_io_fv.select{|io_fv| io_fv.part.id == sample_source[:id]}.first
+          array_of_keys.each do |key|
+            data_obj = get_associated_data(part, key)
+            associate_data(field_value, key, data_obj) unless data_obj.nil?
+          end
+        end
+      end
+    end
+  end
+
+  def get_input_field_values(operations)
+    io_field_values  = []
+    operations.each do |op|
+      io_field_values += op.input_array(INPUT_ARRAY)
+    end
+    io_field_values
+  end
+
+  #Shows key associated data in the collection based on
+  # the array of keys in the data keys list
+  #
+  # @param collection [Collection] the collection
+  # @param data_keys [Array<Keys>] keys can be string or
+  #     anything that data assocator can use
+  def show_key_associated_data(collection, data_keys)
+    show do
+      title "Measured Data"
+      note "Listed below are the data collected"
+      note "(Concentration (ng/ul), RIN Number)"
+      table display_data(collection, data_keys)
+      #  TODO add in feature for tech to change QC Status
+    end
+  end
+
+
+
 end
