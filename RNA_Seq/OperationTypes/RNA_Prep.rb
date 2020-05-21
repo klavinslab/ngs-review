@@ -40,27 +40,24 @@ class Protocol
 
   ADAPTER_TRANSFER_VOL = 12 # volume of adapter to transfer
   TRANSFER_VOL = 20 # volume of sample to be transferred in ul
-  CONC_RANGE = (50...100) # acceptable concentration range
+  CONC_RANGE = (50...100).freeze # acceptable concentration range
   CSV_HEADERS = ['Plate ID', 'Well Location'].freeze
-  CSV_LOCATION = 'Location TBD'
-  ADAPTER_KEY = "Adapter_key".to_sym
+  CSV_LOCATION = 'Location TBD'.freeze
+  ADAPTER_KEY = 'Adapter_key'.to_sym
 
   def main
-
     return if validate_inputs(operations, inputs_match_outputs: true)
-        || validate_qc(operations)
+    return if validate_qc(operations)
 
     working_plate = setup_job(operations, TRANSFER_VOL, qc_step: false)
-    
-    # multiple plates returned here.  For the off chance that eventually Duke Genome Center will want to 
-    # work with more than one plate at a time in the future.
+
     adapter_plates = make_adapter_plate(working_plate.parts.length)
     adapter_plates.each do |adapter_plate|
       working_plate.associate(ADAPTER_KEY, adapter_plate)
-      associate_plate_to_plate(to_collection: working_plate, from_collection: adapter_plate)
+      associate_plate_to_plate(to_collection: working_plate,
+                               from_collection: adapter_plate)
     end
 
-    
     rna_prep_steps(working_plate)
     store_output_collections(operations, location: 'Freezer')
   end
@@ -71,7 +68,7 @@ class Protocol
   def rna_prep_steps(working_plate)
     show do
       title 'Run RNA-Prep'
-      note "Run typical RNA-Prep Protocol with RNA plate #{working_plate.id} 
+      note "Run typical RNA-Prep Protocol with RNA plate #{working_plate.id}
                 and adapter plate #{working_plate.get(ADAPTER_KEY).class}"
       table highlight_non_empty(working_plate, check: false)
     end
@@ -81,8 +78,10 @@ class Protocol
   #
   # @param num_adapter_needed [int] the number of adapters needed for job
   # @return adapter_plate [Array<collection>] plate with all required adapters
-  # TODO Add feteature so that they can specify the specific sample that the adapter needs to match with
-  # Or perhapse specify the specific groups that they need to go to (or a combination there of)
+  #
+  # TODO: Add feature so that they can specify the specific sample that the
+  #   adapter needs to match with Or perhapses specify the specific groups that
+  #   they need to go to (or a combination there of)
   def make_adapter_plate(num_adapters_needed)
     adapter_plates = []
 
@@ -90,19 +89,25 @@ class Protocol
       title 'Make Adapter Plate'
       note 'On the next page upload CSV of desired Adapters'
     end
-    up_csv = get_validated_uploads(num_adapters_needed, CSV_HEADERS, false, file_location: CSV_LOCATION)
-    # TODO further validate up_csv   EG make sure that all the colletions are real etc and loop back
+
+    up_csv = get_validated_uploads(min_length: num_adapters_needed, 
+                                   headers: CSV_HEADERS, 
+                                   file_location: CSV_LOCATION)
     col_parts_hash = sample_from_csv(up_csv)
 
-
-    first_collection = make_new_plate(COLLECTION_TYPE)
     col_parts_hash.each do |collection_item, parts|
       collection = Collection.find(collection_item.id)
-      plates = make_and_populate_collection(parts, COLLECTION_TYPE, add_column_wise: true, 
-                label_plates: false, first_collection: first_collection)
+
+      plates = make_and_populate_collection(parts,
+                                            collection_type: COLLECTION_TYPE,
+                                            add_column_wise: true,
+                                            label_plates: false)
       plates.each do |adapter_plate|
-        transfer_to_new_collection(collection, adapter_plate, ADAPTER_TRANSFER_VOL, 
-                                    populate_collection: false, array_of_samples: parts)
+        transfer_from_collection_to_collection(collection,
+                                             to_collection: adapter_plate,
+                                             transfer_vol: ADAPTER_TRANSFER_VOL,
+                                             populate_collection: false,
+                                             array_of_samples: parts)
         adapter_plates.push(adapter_plate)
       end
     end
@@ -125,12 +130,12 @@ class Protocol
 
       id_idx = first_row.find_index(CSV_HEADERS[0])
       loc_idx = first_row.find_index(CSV_HEADERS[1])
-      csv.drop(1).each_with_index do |row, idx|
+      csv.drop(1).each do |row|
         collection = Collection.find(row[id_idx])
         part = part_alpha_num(collection, row[loc_idx])
         parts.push(part)
       end
     end
-    parts.group_by { |part| part.containing_collection }
+    parts.group_by(&:containing_collection)
   end
 end

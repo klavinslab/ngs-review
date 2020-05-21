@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # helper function for uploading files
 # note: data associations should be handled externally
 module UploadHelper
@@ -7,10 +5,10 @@ module UploadHelper
   require 'csv'
   require 'open-uri'
 
-  CSV_KEY = 'upload_csv'
+  CSV_KEY = 'upload_csv'.freeze
   REAL_CHARACTERS = ('!'...'~').to_a
-  
-  # @param dirname - directory where files are located, or full path including filename
+
+  # @param dirname - directory or full path including filename
   # @param exp_upload_num - expected number of files to upload
   # @param tries - max. number of attempts to upload expectedNum files
   #
@@ -67,80 +65,91 @@ module UploadHelper
     ups
   end
 
-  # Opens .csv file upload item using its url and stores it line by line in a matrix
+  # Opens .csv file using its url and stores it line by line in a matrix
   #
   # @param upload [upload_obj] the file that you wish to read from
-  # @return matrix [2D-Array] is the array of arrays of the rows read from file, if csv
+  # @return matrix [2D-Array] built from the csv
   def read_url(upload)
     url = upload.url
     matrix = []
     CSV.new(open(url)).each { |line| matrix.push(line) }
-    # open(url).each { |line| matrix.push(line.split(',') }
   end
 
   # Validates upload and ensures that it is correct
   #
-  # @param uplaod_array Array array of  uploads
+  # @param upload_array Array array of  uploads
   # @param expected_num_inputs int the expected number of inputs
   # @param csv_headers array array of expected headers
   # @returns pass Boolean pass or fail (true is pass)
-  def validate_upload(upload_array, expected_num_inputs, csv_headers, multiple_files: true)
-    if upload_array.nil?
+  def validate_upload(uploaded_files:, min_length: 0,
+                      headers:, multiple_files: true)
+    if uploaded_files.nil?
       show do
         title 'No File Attached'
         warning 'No File Was Attached'
-        note "Please hit <b>Okay</b> to try again"
+        note 'Please hit <b>Okay</b> to try again'
       end
       return false
     end
 
     fail_message = ''
 
-
-    # TODO this makes no sense....   Deff should expect more than one file sometimes...
+    # TODO: this makes no sense....should expect more than one file sometimes...
     if multiple_files == false
-      fail_message += 'More than one file was uploaded, ' if upload_array.length > 1
-      upload = upload_array.first
+      if uploaded_files.length > 1
+        fail_message += 'More than one file was uploaded, '
+      end
+      upload = uploaded_files.first
     end
 
     csv = CSV.read(open(upload.url))
-    
-    fail_message += 'CSV length is shorter
-        than expected, ' if csv.length - 1 < expected_num_inputs
-    
-    
-    # TODO Make this more robust.   Sometimes CSV files contain unprintable characters
-    # and mess everythign up.  This works for now but isn't the best solution
+
+    if csv.length - 1 < min_length
+      fail_message += 'CSV length is shorter than expected, '
+    end
+
+    # TODO: Make this more robust. Sometimes CSV files contain unprintable
+    # characters and mess everything up.
     first_row = csv.first
     first_row[0][0] = '' unless REAL_CHARACTERS.include?(first_row[0][0].upcase)
 
-    csv_headers.each do |header|
-      fail_message += "<b>#{header}</b> Header either does not exist or
-        is in wrong format, " if !first_row.include?(header)
+    headers.each do |header|
+      unless first_row.include?(header)
+        fail_message += "<b>#{header}</b> Header either does not exist or is in
+                         wrong format, "
+      end
     end
 
-    if fail_message.length > 0
-      show do
-        title 'Warning Uploaded CSV does not fit correct format'
-        note "#{fail_message}"
-        note "Please hit <b>Okay</b> to try again"
-      end
-      return false
-    else
-      return true
+    return true unless fail_message.length.positive
+
+    show do
+      title 'Warning Uploaded CSV does not fit correct format'
+      note fail_message.to_s
+      note 'Please hit <b>Okay</b> to try again'
     end
+    false
   end
 
-  # Needs documentation
-  def get_validated_uploads(expected_data_points, headers, multi_files, file_location: 'Unknown Location',
-          detailed_instructions: nil)
+  # Asks for tech to upload files and validates files
+  # based on headers information
+  #
+  # @expected_data_points
+  def get_validated_uploads(min_length:,
+                            headers:, multi_files:,
+                            file_location: 'Unknown Location',
+                            detailed_instructions: nil)
     tries = 1
     max_tries = 10
     pass = false
     until pass == true
-      csv_uploads = upload_csv(tries, max_tries, file_location: file_location, 
-                detailed_instructions: detailed_instructions)
-      pass = validate_upload(csv_uploads, expected_data_points, headers, multiple_files: multi_files)
+      csv_uploads = upload_csv(tries: tries, max_tries: max_tries,
+                               file_location: file_location, 
+                               detailed_instructions: detailed_instructions)
+
+      pass = validate_upload(uploaded_files: csv_uploads,
+                             min_length: min_length,
+                             headers: headers,
+                             multiple_files: multi_files)
       tries += 1
       raise 'Too many failed upload attempts' if tries == max_tries && !pass
     end
@@ -148,12 +157,12 @@ module UploadHelper
   end
 
   # Instructions to upload CSV files of concentrations
-  def upload_csv(tries = nil, max_tries = 'NA', file_location: 'Unknown Location',
-        detailed_instructions: nil)
+  def upload_csv(tries: '', max_tries: '', file_location: 'Unknown Location',
+                 detailed_instructions: nil)
     up_csv = show do
       title "Upload CSV (attempts: #{tries}/#{max_tries})"
       note "Please upload a <b>CSV</b> file located at #{file_location}"
-      note "#{detailed_instructions}" unless detailed_instructions.nil?
+      note detailed_instructions.to_s unless detailed_instructions.nil?
       upload var: CSV_KEY.to_sym
     end
     up_csv.get_response(CSV_KEY.to_sym)

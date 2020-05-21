@@ -36,12 +36,14 @@ class Protocol
   include KeywordLib
   include CSVDebugLib
 
-  TRANSFER_VOL = 20 # volume of sample to be transfered in ul
-  PLATE_HEADERS = ['Plate',	'Repeat',	'End time',	'Start temp.',	'End temp.',	'BarCode'].freeze # freeze constant
-  PLATE_LOCATION = 'TBD Location of file'
+  TRANSFER_VOL = 20 # volume of sample to be transferred
+  PLATE_HEADERS = ['Plate',	'Repeat',	'End time',	'Start temp.',
+                   'End temp.',	'BarCode'].freeze
+  PLATE_LOCATION = 'TBD Location of file'.freeze
 
-  BIO_HEADERS = ['Well',	'Sample ID',	'Range',	'ng/uL',	'% Total',	'nmole/L',	'Avg. Size',	'%CV'].freeze # freeze constant
-  BIO_LOCATION = 'TBD Location of file'
+  BIO_HEADERS = ['Well',	'Sample ID',	'Range',	'ng/uL',	'% Total',
+                 'nmole/L',	'Avg. Size',	'%CV'].freeze
+  BIO_LOCATION = 'TBD Location of file'.freeze
 
   SIZE_MIN = 3
   SIZE_MAX = 10
@@ -52,25 +54,29 @@ class Protocol
   LOW_MARG = 5
 
   def main
-    return true if validate_inputs(operations) #validate_inputs returns true if invalid
+    return true if validate_inputs(operations)
 
     working_plate = setup_job(operations, TRANSFER_VOL, qc_step: true)
-    
-    setup_and_take_plate_reader_measurements(working_plate, PLATE_HEADERS, PLATE_LOCATION)
-    setup_ad_take_bioanalizer_measurements(working_plate, BIO_HEADERS, BIO_LOCATION, 
-      AVE_SIZE_KEY, 0, 6)
 
-    ave_size_info = generate_data_range(key: AVE_SIZE_KEY, minimum: SIZE_MIN, maximum: SIZE_MAX)
-    conc_info = generate_data_range(key: CON_KEY, minimum: CONC_MIN, maximum: CONC_MAX, 
-        lower_margin: LOW_MARG, upper_margin: UP_MARG)
+    setup_and_take_plate_reader_measurements(working_plate, PLATE_HEADERS, 
+                                             PLATE_LOCATION)
+    setup_ad_take_bioanalizer_measurements(working_plate, BIO_HEADERS, BIO_LOCATION,
+                                           AVE_SIZE_KEY, 0, 6)
+
+    ave_size_info = generate_data_range(key: AVE_SIZE_KEY, minimum: SIZE_MIN,
+                                        maximum: SIZE_MAX)
+
+    conc_info = generate_data_range(key: CON_KEY, minimum: CONC_MIN,
+                                    maximum: CONC_MAX, lower_margin: LOW_MARG,
+                                    upper_margin: UP_MARG)
+
     asses_qc_values(working_plate, [ave_size_info, conc_info])
-
 
     show_key_associated_data(working_plate, [QC_STATUS, CON_KEY, AVE_SIZE_KEY])
 
-    #TODO For some reason it will not overwrite the old association... Not sure why but it wont.
-    # so once a qc has been established it is that way for ever
-    associate_data_back_to_input(working_plate, [QC_STATUS, CON_KEY, RIN_KEY], operations)
+    # TODO: For some reason it will not overwrite the old association...
+    associate_data_back_to_input(working_plate, [QC_STATUS, CON_KEY, RIN_KEY],
+                                 operations)
 
     trash_object(working_plate)
 
