@@ -132,12 +132,14 @@ module UploadHelper
   end
 
   # Needs documentation
-  def get_validated_uploads(expected_data_points, headers, multi_files, file_location: 'Unknown Location')
+  def get_validated_uploads(expected_data_points, headers, multi_files, file_location: 'Unknown Location',
+          detailed_instructions: nil)
     tries = 1
     max_tries = 10
     pass = false
     until pass == true
-      csv_uploads = upload_csv(tries, max_tries, file_location: file_location)
+      csv_uploads = upload_csv(tries, max_tries, file_location: file_location, 
+                detailed_instructions: detailed_instructions)
       pass = validate_upload(csv_uploads, expected_data_points, headers, multiple_files: multi_files)
       tries += 1
       raise 'Too many failed upload attempts' if tries == max_tries && !pass
@@ -146,10 +148,12 @@ module UploadHelper
   end
 
   # Instructions to upload CSV files of concentrations
-  def upload_csv(tries = nil, max_tries = 'NA', file_location: 'Unknown Location')
+  def upload_csv(tries = nil, max_tries = 'NA', file_location: 'Unknown Location',
+        detailed_instructions: nil)
     up_csv = show do
       title "Upload CSV (attempts: #{tries}/#{max_tries})"
       note "Please upload a <b>CSV</b> file located at #{file_location}"
+      note "#{detailed_instructions}" unless detailed_instructions.nil?
       upload var: CSV_KEY.to_sym
     end
     up_csv.get_response(CSV_KEY.to_sym)

@@ -1,4 +1,3 @@
-
 # Cannon Mallory
 # UW-BIOFAB
 # 03/04/2019
@@ -12,26 +11,35 @@ needs 'Collection_Management/CollectionDisplay'
 needs 'Collection_Management/CollectionTransfer'
 needs 'Collection_Management/CollectionActions'
 needs 'Collection_Management/CollectionLocation'
+needs 'RNA_Seq/MiscMethods'
+needs 'RNA_Seq/TakeMeasurements'
+needs 'RNA_Seq/ParseCSV'
 needs 'RNA_Seq/WorkflowValidation'
 needs 'RNA_Seq/KeywordLib'
-needs 'RNA_Seq/CsvDebugLib'
+needs 'RNA_Seq/DataHelper'
+needs 'RNA_Seq/CSVDebugLib'
 
 require 'csv'
 
 class Protocol
   include Debug
+  include Units
   include CollectionDisplay
   include CollectionTransfer
   include CollectionLocation
-  include WorkflowValidation
   include CommonInputOutputNames
-  include KeywordLib
-  include CsvDebugLib
   include CollectionActions
   include UploadHelper
+  include WorkflowValidation
+  include DataHelper
+  include MiscMethods
+  include TakeMeasurements
+  include ParseCSV
+  include KeywordLib
+  include CSVDebugLib
 
   ADAPTER_TRANSFER_VOL = 12 # volume of adapter to transfer
-  TRANSFER_VOL = 20 # volume of sample to be transfered in ul
+  TRANSFER_VOL = 20 # volume of sample to be transferred in ul
   CONC_RANGE = (50...100) # acceptable concentration range
   CSV_HEADERS = ['Plate ID', 'Well Location'].freeze
   CSV_LOCATION = 'Location TBD'
@@ -39,17 +47,10 @@ class Protocol
 
   def main
 
-    validate_inputs(operations, inputs_match_outputs: true)
-    validate_concentrations(operations, CONC_RANGE)
-    operations.retrieve
+    return if validate_inputs(operations, inputs_match_outputs: true)
+        || validate_qc(operations)
 
-    working_plate = make_new_plate(COLLECTION_TYPE)
-    operations.each do |op|
-      input_fv_array = op.input_array(INPUT_ARRAY)
-      output_fv_array = op.output_array(OUTPUT_ARRAY)
-      transfer_subsamples_to_working_plate(input_fv_array, working_plate, TRANSFER_VOL)
-      associate_field_values_to_plate(output_fv_array, working_plate)
-    end
+    working_plate = setup_job(operations, TRANSFER_VOL, qc_step: false)
     
     # multiple plates returned here.  For the off chance that eventually Duke Genome Center will want to 
     # work with more than one plate at a time in the future.
@@ -60,8 +61,6 @@ class Protocol
     end
 
     
-
-    store_input_collections(operations)
     rna_prep_steps(working_plate)
     store_output_collections(operations, location: 'Freezer')
   end
