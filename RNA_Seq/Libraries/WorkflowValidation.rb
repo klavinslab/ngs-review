@@ -4,16 +4,18 @@
 # malloc3@uw.edu
 #
 # Module that validates workflow parameters at run time
+needs 'Standard Libs/AssociationManagement'
 needs 'Standard Libs/CommonInputOutputNames'
 needs 'RNA_Seq/KeywordLib'
 
 module WorkflowValidation
+  include AssociationManagement
   include CommonInputOutputNames
   include KeywordLib
 
   # Validates that total inputs (from all operations)
   # are within the acceptable range
-  #
+  # 
   # @param operations [OperationList] list of all operations in the job
   # @param inputs_match_outputs [Boolean] check if number of inputs matches number of outputs
   # @return cancel_job [Boolean] true if job should be canceled/ended now
@@ -31,18 +33,18 @@ module WorkflowValidation
     message += "Item #{a.id} has been included multiple times in this job," if a != nil
     message += 'The number of Input Items and Output
             Items do not match,' if total_inputs.length != total_outputs.length && inputs_match_outputs
-    message += 'Too many Items for this job. Please re-lauch 
+    message += 'Too many Items for this job. Please re-launch 
             job with fewer Items,' if total_inputs.length > MAX_INPUTS
     message += 'There are no Items for this job.' if total_inputs.length <= 0
     return end_job(operations, message: message) unless message == ''
     false
   end
 
-  # Displays all errored operations and items that failed QC
+  # Displays all erred operations and items that failed QC
   # Walks through all validation fails.
   #
   # @param failed_ops [Hash] Key: Operation ID, Value: Array[Items]
-  def show_errored_operations(failed_ops)
+  def show_erred_operations(failed_ops)
     show do 
       title "Some Operations have failed QC"
       note "<b>#{failed_ops.length}</b> Operations have Items that failed QC"
@@ -50,48 +52,28 @@ module WorkflowValidation
               are at fault"
     end
 
-    failed_ops.each do |op, errored_items|
+    failed_ops.each do |op, erred_items|
       show do
         title "Failed Operation and Items"
         note "Operation <b>#{op.id}</b> from Plan <b>#{op.plan.id}</b>"
-        errored_items.each do |item|
+        erred_items.each do |item|
           note "Item <b>#{item.id}</b>"
         end
       end
     end
   end
 
-  # Validates concentrations of items in the RNA_Prep protocol
-  #Can return remove all items from the operationlist Operations
-  # this is useful for certain fail criteria but must be careful else
-  # things will act very oddly
+  
+  # Validates that operations have passed QC
   #
-  # @params operations [OperationList] list of operations
-  # @param range [Range] the range that the concentrations must be in ng/ul
-  # @return cancel_job [Boolean] true if job should be canceled
-  def validate_concentrations(operations, range)
-    failed_ops = get_invalid_operations(operations, range)
-    manage_failed_ops(operations, failed_ops)
-  end
-
-  # validates that all items have passed cDNA QC
-  #Can return remove all items from the operationlist Operations
-  # this is useful for certain fail criteria but must be careful else
-  # things will act very oddly
-  #
-  # @params operations [OperationList] list of operations
-  # @return cancel_job [Boolean] true if job should be canceled
-  def validate_cdna_qc(operations)
-    failed_ops = get_failed_cdna_ops(operations)
+  # @param operations [OperationList] list of operations
+  def validate_qc(operations)
+    failed_ops = get_qc_fails(operations)
     manage_failed_ops(operations, failed_ops)
   end
 
 
 
-  # wrapper for get_qc_fails
-  def get_invalid_operations(operations)
-    get_qc_fails(operations)
-  end
 
   # Get all the operation that did not pass QC
   #
@@ -111,14 +93,11 @@ module WorkflowValidation
     failed_ops
   end
 
-  #wrapper for get_qc_fails
-  def get_failed_cdna_ops(operations)
-    get_qc_fails(operations)
-  end
+
 
 
   # Manages failed ops.  Coordinates what needs to happen with failed operations
-  # Can return remove all items from the operationlist Operations
+  # Can return remove all items from the operation list Operations
   # this is useful for certain fail criteria but must be careful else
   # things will act very oddly
   #
@@ -153,7 +132,7 @@ module WorkflowValidation
         cancel_job = true
       elsif interactive
         cancel_job = get_cancel_feedback(total_items, num_items_removed, num_items_left)
-        show_errored_operations(failed_ops)
+        show_erred_operations(failed_ops)
       end
 
       return end_job(operations) if cancel_job
@@ -161,6 +140,8 @@ module WorkflowValidation
     end
   end
 
+
+  
   # cancels the job.  Sets all operations passed to pending
   # and returns true.   Assumes that in protocol code there
   # exists a case statement if true will skip the rest of 
@@ -170,7 +151,7 @@ module WorkflowValidation
   # canceling the job
   #
   # operations [Array<Operation>] an array (or OperationList)of ops
-  # message [String] otional sting for cencel message
+  # message [String] optional sting for canceled message
   def end_job(operations, message: nil)
     set_to_pending(operations)
     show do
@@ -197,16 +178,16 @@ module WorkflowValidation
   end
 
 
-  # gets feed back from the technition on weather they want to continue with
+  # gets feed back from the tech on weather they want to continue with
   # the job or to cancel and re batch.
   #
   # @param total_items [Int] the total number of items in the job
   # @param num_failed [Int] number of failed items
   # @param num_left [Int] number of items left in job
   # @return cancel [Boolean] true if the job should be canceled
-  def get_cancel_feedback(total_items, num_failed, num_left)
+  def get_cancel_feedback(total_items, num_failed, num_left, num_tries: 10)
     cancel = nil
-    10.times do 
+    num_tries.times do 
       feedback_one = show do 
         title "Some Items in this Job failed QC"
         separator
@@ -231,18 +212,18 @@ module WorkflowValidation
         return false
       end
     end
-    raise "Job Canceled, answer was not consistant.  All Operations errored"
+    raise "Job Canceled, answer was not consistent.  All Operations erred"
   end
 
   # get all the operations that may be in the same plan that should be removed
-  # from the job but should not be canceled or errored.
+  # from the job but should not be canceled or erred.
   #
   # @param operations [OperationList] list of operations
-  # @param failed_ops [Hash] hash of key op: value Array[Itmes]
-  # @return removed_ops [Array] list of operationts that should be removed
+  # @param failed_ops [Hash] hash of key op: value Array[Items]
+  # @return removed_ops [Array] list of operations that should be removed
   def get_removed_ops(operations, failed_ops)
     removed_ops = []
-    failed_ops.each do |failed_op, errored_items|
+    failed_ops.each do |failed_op, erred_items|
       plan = failed_op.plan
       operations.each do |op|
         unless failed_ops.keys.include?(op) || removed_ops.include?(op) || op.plan != plan
@@ -284,7 +265,7 @@ module WorkflowValidation
   end
 
   # moves all operations in a plan of a certain object type to delayed
-  # @param plan [Plan] the plan in wich we want to 
+  # @param plan [Plan] the plan
   # @param operation_type [String] the name of the operation type
   # @param exclude [Array<operation>] an array of operations to 
   #    be excluded
@@ -318,7 +299,7 @@ module WorkflowValidation
   # gets the number of input items in the input array of each op in list
   #
   # @param ops [Array] Operation List is acceptable of operations
-  # @return nmum_items [Int] the number of input items (Hash is acceptable)
+  # @return num_items [Int] the number of input items (Hash is acceptable)
   def get_num_items(ops)
 
     if ops.is_a?(Hash)
@@ -334,7 +315,7 @@ module WorkflowValidation
 
 
     # Goes through and stops all failed ops and moves them to error
-  # Calls method that will also paus all plans of the same type
+  # Calls method that will also pause all plans of the same type
   #
   # @param operations [OperationList] list of operations
   # @param downstream_operation_type [String] the name of the operation to be delayed
@@ -349,7 +330,4 @@ module WorkflowValidation
     manage_failed_ops(operations, failed_ops, interactive: false, 
       error_failed: true, delay_similar_ops: false)
   end
-
-
-
 end
