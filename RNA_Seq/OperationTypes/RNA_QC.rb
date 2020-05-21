@@ -19,7 +19,6 @@ needs 'RNA_Seq/WorkflowValidation'
 needs 'RNA_Seq/KeywordLib'
 needs 'RNA_Seq/DataHelper'
 
-
 # RNA QC
 class Protocol
   include CollectionActions

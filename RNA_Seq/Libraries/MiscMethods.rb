@@ -6,9 +6,7 @@ needs 'Collection_Management/CollectionDisplay'
 needs 'Collection_Management/CollectionTransfer'
 needs 'Collection_Management/CollectionActions'
 needs 'RNA_Seq/KeywordLib'
-    
-    
-    
+
 module MiscMethods
   include CollectionActions
   include CollectionDisplay
@@ -16,7 +14,6 @@ module MiscMethods
   include KeywordLib
   include CommonInputOutputNames
 
-  
   # Sets up the job and manages transfers etc all that jazz
   #
   # @param operations [OperationList] list of operations
@@ -25,9 +22,7 @@ module MiscMethods
     operations.retrieve
     working_plate = transfer_steps(operations, transfer_vol, qc_step: qc_step)
 
-    if false #qc_step
-      #this is so if the protocol fails we don't end up with a bunch of 
-      # plates in inventory that actually don't exist. 
+    if qc_step
       working_plate.mark_as_deleted
       working_plate.save
     end
@@ -36,8 +31,6 @@ module MiscMethods
     working_plate
   end
 
-  
-    
   # Handles the transfers for the two qc steps
   #
   # @param operations [OperationList] list of operations
@@ -51,26 +44,19 @@ module MiscMethods
       output_fv_array += op.output_array(OUTPUT_ARRAY) unless qc_step
     end
 
-    show do
-      note "the length is #{input_field_value_array.length}"
-    end
+    plates = transfer_subsamples_to_working_plate(input_field_value_array,
+                                               collection_type: COLLECTION_TYPE,
+                                               transfer_vol: transfer_vol,
+                                               add_column_wise: true)
 
-    plates = transfer_subsamples_to_working_plate(input_field_value_array, collection_type: COLLECTION_TYPE, 
-                                                                    transfer_vol: transfer_vol,
-                                                                    add_column_wise: true)
     associate_field_values_to_plate(output_fv_array, plates) unless qc_step
-    show do 
-      note "The num plates:"
-      note plates.length.to_s
-    end
-    if plates.length > 1
-      raise 'Too many items'
-    end
+
+    raise 'Too many items' if plates.length > 1
+
     plates.first
   end
 
-
-    # Gets all input field values from all input operations
+  # Gets all input field values from all input operations
   #
   # @param operations [OperationList] list of operations
   # @return [Array<io_field_values>]
@@ -82,7 +68,6 @@ module MiscMethods
     io_field_values
   end
 
-
   # Shows key associated data in the collection based on
   # the array of keys in the data keys list
   #
@@ -91,12 +76,11 @@ module MiscMethods
   #     anything that data associator can use
   def show_key_associated_data(collection, data_keys)
     show do
-      title "Measured Data"
-      note "Listed below are the data collected"
-      note "(Concentration (ng/ul), RIN Number)"
+      title 'Measured Data'
+      note 'Listed below are the data collected'
+      note '(Concentration (ng/ul), RIN Number)'
       table display_data(collection, data_keys)
-      #  TODO add in feature for tech to change QC Status
+      # TODO: add in feature for tech to change QC Status
     end
   end
-    
 end

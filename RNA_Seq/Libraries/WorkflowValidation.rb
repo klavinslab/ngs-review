@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # Cannon Mallory
 # malloc3@uw.edu
 #
@@ -15,28 +13,39 @@ module WorkflowValidation
 
   # Validates that total inputs (from all operations)
   # are within the acceptable range
-  # 
+  #
   # @param operations [OperationList] list of all operations in the job
-  # @param inputs_match_outputs [Boolean] check if number of inputs matches number of outputs
+  # @param inputs_match_outputs [Boolean] check if number of inputs = outputs
   # @return cancel_job [Boolean] true if job should be canceled/ended now
   def validate_inputs(operations, inputs_match_outputs: false)
     total_inputs = []
     total_outputs = []
     operations.each do |op|
-      total_inputs += op.input_array(INPUT_ARRAY).map! { |fv| fv.sample }
-      total_outputs += op.output_array(OUTPUT_ARRAY).map! { |fv| fv.sample }
+      total_inputs += op.input_array(INPUT_ARRAY).map!(&:fv.sample)
+      total_outputs += op.output_array(OUTPUT_ARRAY).map!(&:fv.sample)
     end
 
-
-    a = total_inputs.detect{ |item| total_inputs.count(item) > 1}
+    a = total_inputs.detect { |item| total_inputs.count(item) > 1 }
     message = ''
-    message += "Item #{a.id} has been included multiple times in this job," if a != nil
-    message += 'The number of Input Items and Output
-            Items do not match,' if total_inputs.length != total_outputs.length && inputs_match_outputs
-    message += 'Too many Items for this job. Please re-launch 
-            job with fewer Items,' if total_inputs.length > MAX_INPUTS
+
+    unless a.nil?
+      message += "Item #{a.id} has been included multiple times in this job,"
+    end
+
+    unless total_inputs.length == total_outputs.length && inputs_match_outputs
+      message += 'The number of Input Items and Output
+                  Items do not match, '
+    end
+
+    if total_inputs.length > MAX_INPUTS
+      message += 'Too many Items for this job. Please re-launch 
+                  job with fewer Items, '
+    end
+
     message += 'There are no Items for this job.' if total_inputs.length <= 0
+
     return end_job(operations, message: message) unless message == ''
+
     false
   end
 
@@ -45,8 +54,8 @@ module WorkflowValidation
   #
   # @param failed_ops [Hash] Key: Operation ID, Value: Array[Items]
   def show_erred_operations(failed_ops)
-    show do 
-      title "Some Operations have failed QC"
+    show do
+      title 'Some Operations have failed QC'
       note "<b>#{failed_ops.length}</b> Operations have Items that failed QC"
       note "The next few pages will show which Operations and Items
               are at fault"
@@ -54,7 +63,7 @@ module WorkflowValidation
 
     failed_ops.each do |op, erred_items|
       show do
-        title "Failed Operation and Items"
+        title 'Failed Operation and Items'
         note "Operation <b>#{op.id}</b> from Plan <b>#{op.plan.id}</b>"
         erred_items.each do |item|
           note "Item <b>#{item.id}</b>"
@@ -63,7 +72,6 @@ module WorkflowValidation
     end
   end
 
-  
   # Validates that operations have passed QC
   #
   # @param operations [OperationList] list of operations
@@ -71,9 +79,6 @@ module WorkflowValidation
     failed_ops = get_qc_fails(operations)
     manage_failed_ops(operations, failed_ops)
   end
-
-
-
 
   # Get all the operation that did not pass QC
   #
@@ -93,9 +98,6 @@ module WorkflowValidation
     failed_ops
   end
 
-
-
-
   # Manages failed ops.  Coordinates what needs to happen with failed operations
   # Can return remove all items from the operation list Operations
   # this is useful for certain fail criteria but must be careful else
@@ -103,45 +105,45 @@ module WorkflowValidation
   #
   # @param operations [OperationList] lis of operations
   # @param failed_ops [Hash] list of failed operations (OperationList okay too)
-  # @param interactive [Boolean] if true then is interactive.  Else will automatically
-  #     fail failed ops but continue good ops
+  # @param interactive [Boolean] if true then is interactive.
+  #    Else will automatically fail failed ops but continue good ops
   # @return cancel_job [Boolean] true if job should be canceled
   def manage_failed_ops(operations, failed_ops, interactive: true, 
-      error_failed: false, delay_similar_ops: true)
-    unless failed_ops.empty?
-      this_job = operations.first.jobs.last
+                        error_failed: false, delay_similar_ops: true)
+    return if failed_ops.empty?
 
-      #must remove all ops from the job that are in the same plan as the failed ops
-      removed_ops = get_removed_ops(operations, failed_ops)
+    # must remove all ops from the job that are in the same plan
+    removed_ops = get_removed_ops(operations, failed_ops)
 
-      #get the total number of items that were removed from the job
-      num_items_removed = get_num_items(failed_ops)
-      num_items_removed += get_num_items(removed_ops) if delay_similar_ops 
+    # get the total number of items that were removed from the job
+    num_items_removed = get_num_items(failed_ops)
+    num_items_removed += get_num_items(removed_ops) if delay_similar_ops 
 
-      #get total number of items originally in th job
-      total_items = get_num_items(operations)
+    # get total number of items originally in th job
+    total_items = get_num_items(operations)
 
-      #get the number of items still in the job
-      num_items_left = total_items - num_items_removed
+    # get the number of items still in the job
+    num_items_left = total_items - num_items_removed
 
-      cancel_ops_and_pause_plans(operations, failed_ops, additional_ops: removed_ops, 
-        error_failed: error_failed, delay_similar_ops: delay_similar_ops)
-      
-      cancel_job = false
-      if operations.empty?
-        cancel_job = true
-      elsif interactive
-        cancel_job = get_cancel_feedback(total_items, num_items_removed, num_items_left)
-        show_erred_operations(failed_ops)
-      end
+    cancel_ops_and_pause_plans(operations, failed_ops, 
+                               additional_ops: removed_ops,
+                               error_failed: error_failed,
+                               delay_similar_ops: delay_similar_ops)
 
-      return end_job(operations) if cancel_job
-      false
+    cancel_job = false
+    if operations.empty?
+      cancel_job = true
+    elsif interactive
+      cancel_job = get_cancel_feedback(total_items, num_items_removed,
+                                       num_items_left)
+      show_erred_operations(failed_ops)
     end
+
+    return end_job(operations) if cancel_job
+
+    false
   end
 
-
-  
   # cancels the job.  Sets all operations passed to pending
   # and returns true.   Assumes that in protocol code there
   # exists a case statement if true will skip the rest of 
@@ -155,18 +157,13 @@ module WorkflowValidation
   def end_job(operations, message: nil)
     set_to_pending(operations)
     show do
-      title "Job Ended"
-      unless message.nil?
-        note "#{message}"
-      else
-        note "This job has been ended"
-      end
+      title 'Job Ended'
+      note "#{message}" unless message.nil?
+      note "This job has finished"
     end
+
     true
   end
-
-
-
 
   # sets the operations in the list given to pending
   #
@@ -195,15 +192,18 @@ module WorkflowValidation
         separator
         note "<b>#{num_failed}</b> out of <b>#{total_items}</b> items were 
               removed from this job"
-        note "Do you want to continue this job with the remaining <b>#{num_left}</b> items"
-        select ["Yes", "No"], var: "continue".to_sym, label: "Continue?", default: 1
+        note "Do you want to continue this job with the
+              remaining <b>#{num_left}</b> items"
+        select ["Yes", "No"], var: "continue".to_sym,
+                              label: "Continue?", default: 1
       end
 
       if feedback_one[:continue] == "No"
         feedback_two = show do
           title "Are You Sure?"
           note "Are you sure you want to cancel the whole job?"
-          select ["Yes", "No"], var: "cancel".to_sym, label: "Cancel?", default: 1
+          select ["Yes", "No"], var: "cancel".to_sym, 
+                                label: "Cancel?", default: 1
         end
         if feedback_two[:cancel] == "Yes"
           return true
@@ -238,17 +238,21 @@ module WorkflowValidation
 
   # cancels all failed ops and removes from operations list
   # sets all like ops in same plans as failed ops to 'delayed'
-  # Can return remove all items from the operationlist Operations
+  # Can return remove all items from the operation list Operations
   # this is useful for certain fail criteria but must be careful else
   # things will act very oddly
   #
   # @param operations [OperationList] list of operations
   # @param failed_ops [Hash] list of failed operations
-  # @param removed_ops [Array] list of ops that did not fail but need to be removed from plan
+  # @param removed_ops [Array] list of ops but need to be removed from plan
   def cancel_ops_and_pause_plans(operations, failed_ops, additional_ops: nil, 
             error_failed: false, delay_similar_ops: true)
     cancel_ops(operations, failed_ops, error_op: error_failed)
-    cancel_ops(operations, additional_ops) if delay_similar_ops && !additional_ops.nil?
+
+    if delay_similar_ops && !additional_ops.nil?
+      cancel_ops(operations, additional_ops)
+    end
+
     pause_like_ops(failed_ops) if delay_similar_ops
   end
 
@@ -313,21 +317,21 @@ module WorkflowValidation
     num_items
   end
 
-
-    # Goes through and stops all failed ops and moves them to error
+  # Goes through and stops all failed ops and moves them to error
   # Calls method that will also pause all plans of the same type
   #
   # @param operations [OperationList] list of operations
-  # @param downstream_operation_type [String] the name of the operation to be delayed
+  # @param downstream_operation_type [String] the name of operation to delay
   # @return cancel_job [Boolean] true if the job should be ended now
   def stop_qc_failed_operations(operations, downstream_operation_type)
     # get a list of operations that did fail qc
     failed_ops = get_qc_fails(operations)
-    failed_ops.each do |op, failed_items|
+    failed_ops.each do |op|
       plan = op.plan
       pause_ops_of_type(plan, downstream_operation_type)
     end
-    manage_failed_ops(operations, failed_ops, interactive: false, 
-      error_failed: true, delay_similar_ops: false)
+    manage_failed_ops(operations, failed_ops, interactive: false,
+                                              error_failed: true,
+                                              delay_similar_ops: false)
   end
 end

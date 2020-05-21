@@ -135,7 +135,7 @@ module UploadHelper
   #
   # @expected_data_points
   def get_validated_uploads(min_length:,
-                            headers:, multi_files:,
+                            headers:, multi_files: false,
                             file_location: 'Unknown Location',
                             detailed_instructions: nil)
     tries = 1
