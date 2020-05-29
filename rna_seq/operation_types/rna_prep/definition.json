@@ -1,0 +1,24 @@
+{
+  "id": 21,
+  "name": "RNA Prep",
+  "parent_class": "OperationType",
+  "category": "RNA_Seq",
+  "inputs": [
+    {
+      "name": "Input Array",
+      "part": false,
+      "array": true,
+      "routing": "R"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Output Array",
+      "part": false,
+      "array": true,
+      "routing": "R"
+    }
+  ],
+  "on_the_fly": false,
+  "user_id": 1
+}

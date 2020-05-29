@@ -1,5 +1,8 @@
 # Protocols for NGS
 
+<b>Requires</b>: [StandardLibs](https://github.com/klavinslab/standard-libraries), [CollectionManagement](https://github.com/klavinslab/aq-collection-management)
+<b>Note</b> Standard Libs may need update to ItemAction for this library to work properly
+
 # General 
 * [Style Guide I've been working on](https://gist.github.com/cashmonger/7b6bd95b04cefca14497211c4ac9ffb8)
 

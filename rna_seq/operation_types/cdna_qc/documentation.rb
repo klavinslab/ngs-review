@@ -1,0 +1,1 @@
+#This Protocol is to Quality check the cDNA created in RNA Prep.  Must be run after RNA Prep but before Normalization Pooling
