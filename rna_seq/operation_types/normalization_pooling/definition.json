@@ -1,0 +1,24 @@
+{
+  "id": 20,
+  "name": "Normalization Pooling",
+  "parent_class": "OperationType",
+  "category": "RNA_Seq",
+  "inputs": [
+    {
+      "name": "Input Array",
+      "part": false,
+      "array": true,
+      "routing": "IA"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Output Array",
+      "part": false,
+      "array": true,
+      "routing": "IA"
+    }
+  ],
+  "on_the_fly": false,
+  "user_id": 1
+}

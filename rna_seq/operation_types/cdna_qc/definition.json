@@ -1,0 +1,17 @@
+{
+  "id": 23,
+  "name": "cDNA QC",
+  "parent_class": "OperationType",
+  "category": "RNA_Seq",
+  "inputs": [
+    {
+      "name": "Input Array",
+      "part": false,
+      "array": true,
+      "routing": "IA"
+    }
+  ],
+  "outputs": [],
+  "on_the_fly": false,
+  "user_id": 1
+}

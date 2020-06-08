@@ -1,0 +1,17 @@
+{
+  "id": 22,
+  "name": "RNA QC",
+  "parent_class": "OperationType",
+  "category": "RNA_Seq",
+  "inputs": [
+    {
+      "name": "Input Array",
+      "part": false,
+      "array": true,
+      "routing": "IS"
+    }
+  ],
+  "outputs": [],
+  "on_the_fly": false,
+  "user_id": 1
+}

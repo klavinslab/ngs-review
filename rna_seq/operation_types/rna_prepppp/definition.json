@@ -1,0 +1,17 @@
+{
+  "id": 10,
+  "name": "RNA_Prepppp",
+  "parent_class": "OperationType",
+  "category": "RNA_Seq",
+  "inputs": [
+    {
+      "name": "Input Array",
+      "part": false,
+      "array": true,
+      "routing": "R"
+    }
+  ],
+  "outputs": [],
+  "on_the_fly": false,
+  "user_id": 1
+}
